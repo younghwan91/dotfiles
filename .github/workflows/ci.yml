@@ -18,5 +18,7 @@ jobs:
         run: bash tests/test_cron_install.sh
       - name: install profiles
         run: bash tests/test_install.sh
+      - name: shellcheck
+        run: bash tests/test_shellcheck.sh
       - name: update prints its steps
         run: (command -v zsh || sudo apt-get install -y zsh) && bash tests/test_update_steps.sh

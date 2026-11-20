@@ -49,7 +49,7 @@ case "$(uname -s)" in
   *)      os=other ;;
 esac
 
-if [ -t 1 ]; then B=$'\e[1m' G=$'\e[32m' Y=$'\e[33m' C=$'\e[36m' D=$'\e[2m' R=$'\e[0m'; else B= G= Y= C= D= R=; fi
+if [ -t 1 ]; then B=$'\e[1m' G=$'\e[32m' Y=$'\e[33m' C=$'\e[36m' D=$'\e[2m' R=$'\e[0m'; else B='' G='' Y='' C='' D='' R=''; fi
 echo "${B}${C}▸ dotfiles${R} ${D}os=$os  profile=$profile  repo=${repo/#$HOME/~}${R}"
 
 link() {  # link <레포 기준 원본 | 절대 경로> <대상>

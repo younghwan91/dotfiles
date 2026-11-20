@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # 공통: 커밋 신원 검사 (pre-commit / pre-push 가 source 한다)
 #
 # 값은 install.sh 가 프로필에 따라 링크한다:
