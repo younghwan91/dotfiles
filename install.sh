@@ -80,7 +80,7 @@ for l in "$bin_dir"/*; do  # 그런 부산물을 가리키던 옛 링크를 걷�
 done
 link zsh/zshrc  ~/.zshrc
 link zsh/zshenv ~/.zshenv
-if [ $os = darwin ] && [ -e "$repo/zsh/p10k.darwin.zsh" ]; then link zsh/p10k.darwin.zsh ~/.p10k.zsh
+if [ "$os" = darwin ] && [ -e "$repo/zsh/p10k.darwin.zsh" ]; then link zsh/p10k.darwin.zsh ~/.p10k.zsh
 else link zsh/p10k.zsh ~/.p10k.zsh; fi
 link git/gitconfig     ~/.gitconfig
 link git/hooks         ~/.config/git/hooks
@@ -142,21 +142,21 @@ fi
 # Orca 에이전트 스킬(orca-cli, orchestration, computer-use)을 ~/.agents/skills 에 깔고 Claude Code 에 링크한다.
 # CLI 는 리눅스에서 `orca-ide`(/usr/bin/orca 는 GNOME 화면 낭독기), macOS 에서 `orca`
 # (Orca → Settings → General → Orca CLI 에서 등록). 다시 돌려도 안전: 그대로인 사본은 "No change" 로 나온다.
-orca_cli=orca-ide; [ $os = darwin ] && orca_cli=orca
+orca_cli=orca-ide; [ "$os" = darwin ] && orca_cli=orca
 if [ -z "${INSTALL_SKIP_SERVICES:-}" ] && command -v $orca_cli >/dev/null; then
   $orca_cli skills install --skill orca-cli --skill orchestration --skill computer-use --agent claude 2>&1 \
     | sed "s/^/  ${D}orca 스킬${R} /"
 fi
 
 # ---- macOS ----
-if [ $os = darwin ]; then
+if [ "$os" = darwin ]; then
   link macos/karabiner.json          ~/.config/karabiner/karabiner.json
   link macos/vscode/settings.json    "$HOME/Library/Application Support/Code/User/settings.json"
   if [ $with_brew = 1 ] && command -v brew >/dev/null; then brew bundle --file "$repo/macos/Brewfile"; fi
 fi
 
 # ---- Linux: Google Drive 마운트 (사용자 서비스. gdrive 리모트가 생긴 뒤에만 켠다) ----
-if [ $os = linux ] && [ -z "${INSTALL_SKIP_SERVICES:-}" ] && command -v systemctl >/dev/null; then
+if [ "$os" = linux ] && [ -z "${INSTALL_SKIP_SERVICES:-}" ] && command -v systemctl >/dev/null; then
   link linux/systemd/rclone-gdrive.service ~/.config/systemd/user/rclone-gdrive.service
   systemctl --user daemon-reload
   if command -v rclone >/dev/null && rclone listremotes 2>/dev/null | grep -qx 'gdrive:'; then
@@ -167,14 +167,14 @@ if [ $os = linux ] && [ -z "${INSTALL_SKIP_SERVICES:-}" ] && command -v systemct
 fi
 
 # ---- Linux 데스크톱 (WSL 은 윈도우 쪽 VS Code 를 쓴다) ----
-if [ $os = linux ] && command -v code >/dev/null; then
+if [ "$os" = linux ] && command -v code >/dev/null; then
   link macos/vscode/settings.json ~/.config/Code/User/settings.json
 fi
 
 # ---- 프로필 ----
 # personal: 범용 위에 personal/(별도 비공개 레포) 의 값을 얹는다. vanilla: personal 을 가리키는 링크를 걷어낸다.
 personal=${DOTFILES_PERSONAL:-$repo/personal}
-if [ $profile = personal ] && [ ! -d "$personal" ]; then
+if [ "$profile" = personal ] && [ ! -d "$personal" ]; then
   personal_repo=${DOTFILES_PERSONAL_REPO:-$(git -C "$repo" remote get-url origin 2>/dev/null | sed -E 's#(\.git)?$#-personal\1#')}
   echo "  ${C}clone${R} $personal_repo → ${personal/#$HOME/~}"
   git clone -q "$personal_repo" "$personal" \
@@ -192,11 +192,11 @@ for f in "$personal"/claude/agents/*.md; do
 done
 for pair in "${personal_links[@]}"; do
   src=${pair%%:*} dst=${pair#*:}
-  if [ $profile = personal ]; then
+  if [ "$profile" = personal ]; then
     link "$src" "$dst"
   fi
 done
-if [ $profile = vanilla ]; then
+if [ "$profile" = vanilla ]; then
   # personal 링크, 그리고 프로필 도입 전 옛 위치(git/allowed-emails, claude/agents)를 가리키는 끊긴 링크
   for dst in ~/.config/git/profile.gitconfig ~/.config/git/allowed-emails ~/.config/git/blocked-domains \
              ~/.claude/CLAUDE.personal.md ~/.claude/agents/*.md ~/.ssh/config.d/dotfiles-personal.conf; do
@@ -223,7 +223,7 @@ if compgen -G "$HOME/.ssh/config.d/*.conf" >/dev/null; then
     echo "  ${G}→${R} ~/.ssh/config: 맨 끝에 Include config.d/*.conf (이전 것은 ~/.ssh/config.bak-dotfiles)"
   fi
 fi
-if [ $profile = vanilla ] && [ -z "$(git config --global --includes user.email 2>/dev/null)" ]; then
+if [ "$profile" = vanilla ] && [ -z "$(git config --global --includes user.email 2>/dev/null)" ]; then
   if [ -t 0 ]; then
     read -r -p "git 이름: " gname; read -r -p "git 메일: " gmail
     git config --file ~/.gitconfig.local user.name "$gname"
