@@ -102,6 +102,7 @@ def translate(script: str) -> str | None:
     return body or None
 
 
+_LOCK: list = []  # 잡고 있는 ci-local 잠금 파일(GC 로 닫히지 않게)
 _WT: "list[tuple[Path, Path]]" = []   # (레포, 전용 워크트리) — 끝나면 지운다
 
 
@@ -146,6 +147,17 @@ def main() -> int:
     py = pick_python(wf)
     base = common / "ci-local"
     base.mkdir(exist_ok=True)
+    # 링크된 워크트리는 .git(common) 을 같이 쓴다 → ci-local/worktree·venv 도 하나뿐이다. 잠금 없이
+    # 두 워크트리에서 동시에 푸시하면 서로의 체크아웃을 덮어써 엉뚱한 파일로 테스트가 깨졌다
+    # (2026-10-26 cerebellum, 에이전트 8개 병렬). 프로세스가 끝나면 잠금은 저절로 풀린다.
+    import fcntl
+    lock = open(base / "lock", "w")  # noqa: SIM115 — 프로세스 수명 동안 쥔다
+    try:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        say(f"  {D}다른 워크트리의 ci-local 이 도는 중 — 끝날 때까지 기다린다{R}")
+        fcntl.flock(lock, fcntl.LOCK_EX)
+    _LOCK.append(lock)
     wt = base / "worktree"
     venv = base / f"venv-{py}"
     logdir = base / "logs"
