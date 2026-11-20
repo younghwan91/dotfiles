@@ -1,16 +1,23 @@
-import json, subprocess, sys
+import json
 import os
+import subprocess
+import sys
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 G = os.path.join(HERE, "guard.py")
 sys.path.insert(0, HERE)
-import _guard_fixture as fx
+import _guard_fixture as fx  # noqa: E402 — needs HERE on sys.path
+
 # 가짜 HOME + crontab: 어느 머신에서 돌려도 운영 체크아웃 케이스가 같은 결과를 낸다
 FAKE, ENV = fx.make()
 def run(tool, **ti):
     ti = {k: fx.sub(v, FAKE) for k, v in ti.items()}
     p = subprocess.run([sys.executable, G], input=json.dumps({"tool_name": tool, "tool_input": ti}), capture_output=True, text=True, env=ENV)
     return "DENY" if "deny" in p.stdout else "ok"
-B = lambda c: run("Bash", command=c)
+def B(c):
+    return run("Bash", command=c)
+
+
 def BC(c, cwd):
     p = subprocess.run([sys.executable, G], input=json.dumps({"tool_name": "Bash", "tool_input": {"command": fx.sub(c, FAKE)}, "cwd": fx.sub(cwd, FAKE)}), capture_output=True, text=True, env=ENV)
     return "DENY" if "deny" in p.stdout else "ok"
@@ -125,7 +132,9 @@ cases = [
 ]
 bad = 0
 for i,(exp,got) in enumerate(cases):
-    if exp != got: bad += 1; print("FAIL", i, exp, got)
+    if exp != got:
+        bad += 1
+        print("FAIL", i, exp, got)
 print(f"{len(cases)-bad}/{len(cases)} pass")
 # v2 회귀(세션 기록 코퍼스 오탐·미탐)
 more = [
@@ -168,5 +177,7 @@ more = [
 ]
 bad = 0
 for i,(exp,got) in enumerate(more):
-    if exp != got: bad += 1; print("FAIL more", i, exp, got)
+    if exp != got:
+        bad += 1
+        print("FAIL more", i, exp, got)
 print(f"{len(more)-bad}/{len(more)} more pass")
