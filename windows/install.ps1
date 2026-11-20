@@ -39,3 +39,31 @@ if (Test-Path $shared) {
 } else {
     Write-Host "no personal repo at $repo\personal - skipping SSH hosts (clone the private personal repo there to sync them)"
 }
+
+# Authorized keys: same list as bin/ssh-keys-sync on Linux — the GitHub account's keys plus
+# personal\ssh\authorized_keys. Admin accounts use C:\ProgramData\ssh\administrators_authorized_keys.
+# Never empties the file: if GitHub can't be reached or returns no keys, nothing changes.
+$owner = (git -C $repo remote get-url origin) -replace '.*github\.com[:/]([^/]+)/.*', '$1'
+try { $ghKeys = (Invoke-RestMethod -TimeoutSec 20 "https://github.com/$owner.keys") -split "`n" | Where-Object { $_ -match '^(ssh-|ecdsa-|sk-)' } }
+catch { $ghKeys = @() }
+if ($ghKeys.Count -eq 0) {
+    Write-Warning "authorized keys: no keys from github.com/$owner.keys - left unchanged"
+} else {
+    $extraFile = Join-Path $repo 'personal\ssh\authorized_keys'
+    $extra = if (Test-Path $extraFile) { Get-Content $extraFile | Where-Object { $_ -match '^(ssh-|ecdsa-|sk-)' } } else { @() }
+    $seen = @{}
+    $lines = @("# ssh-keys-sync (install.ps1) manages this file - GitHub($owner) keys + personal/ssh/authorized_keys")
+    foreach ($k in @($ghKeys | ForEach-Object { "$($_.Trim()) $owner@github" }) + @($extra)) {
+        $id = ($k -split ' ')[0..1] -join ' '
+        if (-not $seen[$id]) { $seen[$id] = $true; $lines += $k }
+    }
+    $isAdmin = (whoami /groups) -match 'S-1-5-32-544'
+    $akFile = if ($isAdmin) { 'C:\ProgramData\ssh\administrators_authorized_keys' } else { Join-Path $HOME '.ssh\authorized_keys' }
+    $want = ($lines -join "`n") + "`n"
+    $have = if (Test-Path $akFile) { [IO.File]::ReadAllText($akFile) -replace '\r\n', "`n" } else { '' }
+    if ($want -ne $have) {
+        if (Test-Path $akFile) { Copy-Item $akFile "$akFile.bak-dotfiles" -Force }
+        [IO.File]::WriteAllText($akFile, $want, (New-Object System.Text.UTF8Encoding($false)))   # keeps the file's ACL
+        Write-Host "updated: $akFile ($($lines.Count - 1) keys; previous copy in .bak-dotfiles)"
+    }
+}
