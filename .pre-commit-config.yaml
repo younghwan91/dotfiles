@@ -1,0 +1,10 @@
+# The global pre-commit hook (git/hooks/pre-commit) runs this on every commit in this repo.
+repos:
+  - repo: local
+    hooks:
+      - id: check-no-personal
+        name: no personal info in the public repo
+        entry: python3 tests/check_no_personal.py
+        language: system
+        pass_filenames: false
+        always_run: true
