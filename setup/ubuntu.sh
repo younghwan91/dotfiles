@@ -23,14 +23,14 @@ echo "   Ubuntu 서버 환경 전체 설치"
 echo "===================================================="
 
 # 1. 시작 확인
-read -p "설치를 시작할까요? (y/n): " confirm
+read -r -p "설치를 시작할까요? (y/n): " confirm
 if [[ $confirm != [yY] && $confirm != [yY][eE][sS] ]]; then
     echo "설치를 취소했습니다."
     exit 0
 fi
 
 # 개인 PC 전용: 비밀번호 없는 sudo (되돌리기: sudo rm /etc/sudoers.d/90-$USER-nopasswd)
-read -p "$USER 에게 비밀번호 없는 sudo 를 줄까요? (y/n): " nopasswd
+read -r -p "$USER 에게 비밀번호 없는 sudo 를 줄까요? (y/n): " nopasswd
 if [[ $nopasswd == [yY] ]]; then
     echo "$USER ALL=(ALL) NOPASSWD:ALL" | sudo tee "/etc/sudoers.d/90-$USER-nopasswd" > /dev/null
     sudo chmod 440 "/etc/sudoers.d/90-$USER-nopasswd"
@@ -179,6 +179,7 @@ if [ ! -s "$NVM_DIR/nvm.sh" ]; then
     nvm_tag=$(curl -fsSL https://api.github.com/repos/nvm-sh/nvm/releases/latest | jq -r .tag_name)
     curl -fsSL "https://raw.githubusercontent.com/nvm-sh/nvm/$nvm_tag/install.sh" | PROFILE=/dev/null bash
 fi
+# shellcheck source=/dev/null  # nvm 설치가 만드는 파일
 . "$NVM_DIR/nvm.sh"
 nvm install --lts
 nvm alias default 'lts/*'
