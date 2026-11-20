@@ -58,6 +58,11 @@ cp -r "$P/." "$src/" && git -C "$src" init -q && git -C "$src" add -A \
 DOTFILES_PERSONAL="$HOME/p" DOTFILES_PERSONAL_REPO="$src" inst --profile personal
 if [ $? -eq 0 ] && [ -d "$HOME/p/.git" ] && points "$HOME/.config/git/allowed-emails" "$HOME/p/git/allowed-emails"; then ok; else no personal_cloned_when_missing; fi
 
+# bin/ 의 실행 파일만 링크하고, 부산물(__pycache__)을 가리키던 옛 링크는 걷는다
+fresh; mkdir -p "$BIN_DIR"; ln -s "$REPO/bin/__pycache__" "$BIN_DIR/__pycache__"
+inst --profile vanilla
+if [ $? -eq 0 ] && [ -L "$BIN_DIR/pull-all" ] && [ ! -e "$BIN_DIR/__pycache__" ] && [ ! -L "$BIN_DIR/__pycache__" ]; then ok; else no bin_links_executables_only; fi
+
 # zshrc 는 프로필 파일이 없으면 DOTFILES_PROFILE 을 비워 둔다 — setup 스크립트가 그걸 선택으로 오인하면 안 된다
 if command -v zsh >/dev/null; then
   fresh
