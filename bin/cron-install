@@ -200,8 +200,8 @@ def main() -> int:
     if r.returncode != 0:
         print(f"[{stamp}] ⛔ crontab 이 결과를 거부함: {r.stderr.strip()} — 이전 crontab 은 그대로", file=sys.stderr)
         return 1
-    added = sum(1 for l in diff if l.startswith("+") and not l.startswith("+++"))
-    removed = sum(1 for l in diff if l.startswith("-") and not l.startswith("---"))
+    added = sum(1 for d in diff if d.startswith("+") and not d.startswith("+++"))
+    removed = sum(1 for d in diff if d.startswith("-") and not d.startswith("---"))
     print(f"[{stamp}] cron-install {host}: 설치함 (블록 {len(new_blocks)}개, +{added}/-{removed}줄, 백업 {backup})")
     return 0
 
