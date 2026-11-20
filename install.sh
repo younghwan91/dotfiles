@@ -207,14 +207,20 @@ if [ $profile = vanilla ]; then
     fi
   done
 fi
-# ssh: 공유 호스트 목록은 ~/.ssh/config.d/*.conf 로 링크하고, ~/.ssh/config 맨 위에서 Include 한다.
-# Include 가 Host 블록보다 앞이어야 모든 호스트에 적용된다. 이 PC 만의 설정은 ~/.ssh/config 에 그대로 둔다.
+# ssh: 공유 호스트 목록은 ~/.ssh/config.d/*.conf 로 링크하고 ~/.ssh/config 맨 끝에서 Include 한다.
+# 맨 끝(Match all 아래)이라 이 PC 의 ~/.ssh/config 값이 먼저 잡힌다 — ssh 는 처음 얻은 값을 쓴다.
+# 처음엔 맨 위에 넣었는데, 그러면 PC 마다 다르게 둔 HostName(예: .local 이 안 풀리는 PC 의 IP)을 덮었다.
 if compgen -G "$HOME/.ssh/config.d/*.conf" >/dev/null; then
   chmod 700 ~/.ssh ~/.ssh/config.d 2>/dev/null || true
-  if ! grep -qxF 'Include config.d/*.conf' ~/.ssh/config 2>/dev/null; then
-    { echo 'Include config.d/*.conf'; echo; cat ~/.ssh/config 2>/dev/null || true; } > ~/.ssh/config.new
-    chmod 600 ~/.ssh/config.new && mv ~/.ssh/config.new ~/.ssh/config
-    echo "  ${G}→${R} ~/.ssh/config: Include config.d/*.conf"
+  touch ~/.ssh/config
+  want=$(awk 'NR==1 && $0=="Include config.d/*.conf" {skip=1; next} skip && $0=="" {skip=0; next} {skip=0; print}' ~/.ssh/config \
+         | awk '{a[NR]=$0} END {n=NR; while (n>0 && a[n]=="") n--; for (i=1;i<=n;i++) print a[i]}' \
+         | sed '/^Match all$/{N; /\nInclude config\.d\/\*\.conf$/d;}')
+  want=$(printf '%s\n\nMatch all\nInclude config.d/*.conf' "$want" | sed '1{/^$/d}')
+  if [ "$want" != "$(cat ~/.ssh/config)" ]; then
+    cp -p ~/.ssh/config ~/.ssh/config.bak-dotfiles
+    printf '%s\n' "$want" > ~/.ssh/config.new && chmod 600 ~/.ssh/config.new && mv ~/.ssh/config.new ~/.ssh/config
+    echo "  ${G}→${R} ~/.ssh/config: 맨 끝에 Include config.d/*.conf (이전 것은 ~/.ssh/config.bak-dotfiles)"
   fi
 fi
 if [ $profile = vanilla ] && [ -z "$(git config --global --includes user.email 2>/dev/null)" ]; then

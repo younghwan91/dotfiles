@@ -59,12 +59,16 @@ cp -r "$P/." "$src/" && git -C "$src" init -q && git -C "$src" add -A \
 DOTFILES_PERSONAL="$HOME/p" DOTFILES_PERSONAL_REPO="$src" inst --profile personal
 if [ $? -eq 0 ] && [ -d "$HOME/p/.git" ] && points "$HOME/.config/git/allowed-emails" "$HOME/p/git/allowed-emails"; then ok; else no personal_cloned_when_missing; fi
 
-# ssh: 공유 호스트 목록을 링크하고 ~/.ssh/config 맨 위에 Include 를 한 번만 넣는다. 기존 내용은 남긴다.
-fresh; mkdir -p "$HOME/.ssh"; printf 'Host mine\n    User me\n' > "$HOME/.ssh/config"
-inst --profile personal; inst --profile personal
+# ssh: 공유 호스트 목록을 링크하고 ~/.ssh/config 맨 끝(Match all 아래)에 Include 를 한 번만 넣는다 —
+# 이 PC 의 값이 먼저 잡히게. 예전 방식(맨 위 Include)은 걷어낸다. 기존 내용은 남기고 백업한다.
+fresh; mkdir -p "$HOME/.ssh"; printf 'Include config.d/*.conf\n\nHost mine\n    User me\n' > "$HOME/.ssh/config"
+inst --profile personal; first=$(cat "$HOME/.ssh/config"); inst --profile personal
 if points "$HOME/.ssh/config.d/dotfiles-personal.conf" "$P/ssh/config" \
-   && [ "$(head -1 "$HOME/.ssh/config")" = 'Include config.d/*.conf' ] \
-   && [ "$(grep -c '^Include config.d' "$HOME/.ssh/config")" = 1 ] && grep -q '^Host mine' "$HOME/.ssh/config"; then ok; else no ssh_include; fi
+   && [ "$(head -1 "$HOME/.ssh/config")" = 'Host mine' ] \
+   && [ "$(tail -2 "$HOME/.ssh/config" | tr '\n' '|')" = 'Match all|Include config.d/*.conf|' ] \
+   && [ "$(grep -c '^Include config.d' "$HOME/.ssh/config")" = 1 ] && grep -q '^    User me' "$HOME/.ssh/config" \
+   && [ "$first" = "$(cat "$HOME/.ssh/config")" ] && [ -f "$HOME/.ssh/config.bak-dotfiles" ]; then ok
+else cp "$HOME/.ssh/config" "$HOME/out.txt"; no ssh_include_last; fi
 
 # bin/ 의 실행 파일만 링크하고, 부산물(__pycache__)을 가리키던 옛 링크는 걷는다
 fresh; mkdir -p "$BIN_DIR"; ln -s "$REPO/bin/__pycache__" "$BIN_DIR/__pycache__"
