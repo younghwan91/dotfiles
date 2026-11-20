@@ -22,11 +22,19 @@ if (Test-Path $shared) {
     $utf8 = New-Object System.Text.UTF8Encoding($false)
     [IO.File]::WriteAllText((Join-Path $confD 'dotfiles-personal.conf'), [IO.File]::ReadAllText($shared), $utf8)
     Write-Host "installed: $confD\dotfiles-personal.conf"
+    # Include goes last, under "Match all", so this PC's own values in ~\.ssh\config win (ssh keeps the first
+    # value it reads). An earlier version put it first, which overrode per-PC HostNames. Backed up before editing.
     $cfg = Join-Path $sshDir 'config'
     $old = if (Test-Path $cfg) { [IO.File]::ReadAllText($cfg) } else { '' }
-    if ($old -notmatch '(?m)^Include config\.d/\*\.conf\s*$') {
-        [IO.File]::WriteAllText($cfg, "Include config.d/*.conf`n`n" + $old, $utf8)
-        Write-Host "updated: $cfg (Include config.d/*.conf)"
+    $body = $old -replace '\r\n', "`n"
+    $body = $body -replace '\AInclude config\.d/\*\.conf\n(\n)?', ''
+    $body = $body -replace '\n*Match all\nInclude config\.d/\*\.conf\n*\z', ''
+    $body = $body.TrimEnd("`n")
+    $new = if ($body) { "$body`n`nMatch all`nInclude config.d/*.conf`n" } else { "Match all`nInclude config.d/*.conf`n" }
+    if ($new -ne ($old -replace '\r\n', "`n")) {
+        if (Test-Path $cfg) { Copy-Item $cfg "$cfg.bak-dotfiles" -Force }
+        [IO.File]::WriteAllText($cfg, $new, $utf8)
+        Write-Host "updated: $cfg (Include config.d/*.conf last; previous copy in config.bak-dotfiles)"
     }
 } else {
     Write-Host "no personal repo at $repo\personal - skipping SSH hosts (clone the private personal repo there to sync them)"
