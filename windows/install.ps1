@@ -67,3 +67,21 @@ if ($ghKeys.Count -eq 0) {
         Write-Host "updated: $akFile ($($lines.Count - 1) keys; previous copy in .bak-dotfiles)"
     }
 }
+
+# Daily sync, like the Linux crons: pull dotfiles (+ personal) and re-run this script at 09:30, so SSH hosts and
+# authorized keys follow the repos without anyone remembering. Needs an elevated session to register (the keys
+# file is admin-only); re-running just updates the task.
+$isElevated = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+if ($isElevated) {
+    $pwsh = (Get-Command pwsh -ErrorAction SilentlyContinue).Source
+    if (-not $pwsh) { $pwsh = (Get-Command powershell).Source }
+    $cmd = "git -C '$repo' pull -q --ff-only; if (Test-Path '$repo\personal') { git -C '$repo\personal' pull -q --ff-only }; & '$repo\windows\install.ps1'"
+    $action = New-ScheduledTaskAction -Execute $pwsh -Argument "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -Command `"$cmd`""
+    $trigger = New-ScheduledTaskTrigger -Daily -At 9:30am
+    $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 15)
+    Register-ScheduledTask -TaskName 'dotfiles-sync' -Action $action -Trigger $trigger -Settings $settings `
+        -User $env:USERNAME -RunLevel Highest -Force | Out-Null
+    Write-Host "scheduled: dotfiles-sync daily 09:30 (git pull + install.ps1)"
+} else {
+    Write-Host "not elevated - skipped the daily dotfiles-sync task (run install.ps1 as admin once to add it)"
+}
