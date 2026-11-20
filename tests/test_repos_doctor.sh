@@ -20,5 +20,15 @@ git -C "$T/p" fetch -q
 out=$(DOTFILES_PERSONAL="$T/p" "$REPO/bin/repos-doctor" 2>&1)
 grep -q "1커밋 뒤" <<<"$out" || { echo "FAIL behind personal not reported"; echo "$out" | grep -i personal; fail=1; }
 
-[ $fail -eq 0 ] && echo "test_repos_doctor: 2/2 pass"
+# Husky 가 훅을 관리하는 레포는 위임 경고를 내지 않고, 다른 레포 전용 훅 폴더는 계속 경고한다
+mkdir -p "$T/git"
+for r in husky own; do git init -q "$T/git/$r"; done
+mkdir -p "$T/git/husky/.husky/_" "$T/git/own/.githooks"
+git -C "$T/git/husky" config core.hooksPath .husky/_
+git -C "$T/git/own" config core.hooksPath .githooks
+out=$(DOTFILES_PERSONAL="$T/p" "$REPO/bin/repos-doctor" "$T/git" 2>&1)
+grep -A3 "husky" <<<"$out" | grep -q "위임 없음" && { echo "FAIL husky repo warned"; fail=1; }
+grep -A3 "own" <<<"$out" | grep -q "위임 없음" || { echo "FAIL .githooks repo without delegation not reported"; echo "$out" | tail -8; fail=1; }
+
+[ $fail -eq 0 ] && echo "test_repos_doctor: 4/4 pass"
 exit $fail
