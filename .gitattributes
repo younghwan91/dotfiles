@@ -1,0 +1,3 @@
+# cmd 는 LF 만 있는 파일에서 goto/call 레이블을 잘못 찾을 수 있다 — Windows 스크립트는 CRLF 로 체크아웃한다.
+*.cmd text eol=crlf
+*.bat text eol=crlf
