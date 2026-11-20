@@ -272,7 +272,7 @@ MEM_TXT="MEM ${MEM_BAR} $(pad3 "$MEM_PCT")% (${MEM_USED_GB}/${MEM_TOTAL_GB}GB)"
 
 TEMP=""
 TZ_PATH=$(grep -l "x86_pkg_temp" /sys/class/thermal/thermal_zone*/type 2>/dev/null | head -1 | sed 's/type$/temp/')
-# Jetson(Thor): x86_pkg_temp 가 없고 CPU 센서 이름은 "cpu-thermal"
+# Jetson: x86_pkg_temp 가 없고 CPU 센서 이름은 "cpu-thermal"
 [ -z "$TZ_PATH" ] && TZ_PATH=$(grep -lx "cpu-thermal" /sys/class/thermal/thermal_zone*/type 2>/dev/null | head -1 | sed 's/type$/temp/')
 [ -z "$TZ_PATH" ] && TZ_PATH=$(ls /sys/class/thermal/thermal_zone*/temp 2>/dev/null | head -1)
 if [ -n "$TZ_PATH" ] && [ -r "$TZ_PATH" ]; then
@@ -295,7 +295,7 @@ GPU_MEM_TXT=""; GPU_MEM_COLOR=""
 GPU_TEMP_TXT=""; GPU_TEMP_COLOR=""
 HAS_GPU=0
 GPU_INFO=$(nvidia-smi --query-gpu=temperature.gpu,utilization.gpu,memory.used,memory.total --format=csv,noheader,nounits 2>/dev/null | head -1)
-# Jetson(Thor)은 통합 메모리라 nvidia-smi 가 메모리를 [N/A] 로 준다. 그래서
+# Jetson 은 통합 메모리라 nvidia-smi 가 메모리를 [N/A] 로 준다. 그래서
 # 거기선 VRM 슬롯을 비워 둔다(시스템 RAM 은 이미 MEM 줄에 있다).
 if echo "$GPU_INFO" | grep -qE '^[0-9]+, *[0-9]+, *([0-9]+|\[N/A\]), *([0-9]+|\[N/A\])$'; then
   HAS_GPU=1
