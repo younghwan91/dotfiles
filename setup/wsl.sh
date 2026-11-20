@@ -3,9 +3,6 @@
 # 에러가 나면 바로 종료
 set -e
 
-# --- 설정 변수 ---
-DEFAULT_WIN_USER="chyoh"
-
 echo "===================================================="
 echo "   WSL Ubuntu AI/로보틱스 환경 설정"
 echo "===================================================="
@@ -16,9 +13,6 @@ if [[ $confirm != [yY] && $confirm != [yY][eE][sS] ]]; then
     echo "사용자가 설정을 취소했습니다."
     exit 0
 fi
-
-read -p "윈도우 사용자 이름 [기본값: $DEFAULT_WIN_USER]: " input_win_user
-WIN_USER=${input_win_user:-$DEFAULT_WIN_USER}
 
 # 2. 바탕화면 경로 찾기 (레지스트리 기준)
 echo "🔍 윈도우 바탕화면 경로를 찾는 중..."
