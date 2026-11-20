@@ -40,7 +40,7 @@ if (Test-Path $shared) {
     Write-Host "no personal repo at $repo\personal - skipping SSH hosts (clone the private personal repo there to sync them)"
 }
 
-# Authorized keys: same list as bin/ssh-keys-sync on Linux — the GitHub account's keys plus
+# Authorized keys: same list as bin/ssh-keys-sync on Linux - the GitHub account's keys plus
 # personal\ssh\authorized_keys. Admin accounts use C:\ProgramData\ssh\administrators_authorized_keys.
 # Never empties the file: if GitHub can't be reached or returns no keys, nothing changes.
 $owner = (git -C $repo remote get-url origin) -replace '.*github\.com[:/]([^/]+)/.*', '$1'
