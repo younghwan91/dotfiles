@@ -21,9 +21,6 @@ C_RESET="\033[0m"
 C_MODEL="\033[38;5;183m"   # 라벤더
 C_DIR="\033[38;5;153m"     # 하늘색
 C_BRANCH="\033[38;5;158m"  # 민트
-C_CPU="\033[38;5;216m"     # 복숭아색
-C_MEM="\033[38;5;111m"     # 연파랑
-C_GPU="\033[38;5;183m"     # 라벤더
 C_ENV="\033[38;5;224m"     # 연장미색
 C_WEATHER="\033[38;5;159m" # 연청록
 C_HOST="\033[38;5;229m"    # 버터 노랑(태그만 paint() 가 굵게, 나머지는 보통)
@@ -163,7 +160,7 @@ fit_all() {
 # 굵게는 3글자 태그(MDL, DIR, BRN, ...)만, 뒤 값은 보통 — PC 도 이제 통째로
 # 굵게 하지 않고 똑같이 처리한다.
 paint() {
-  local text="$1" color="$2" tag="" rest="$text"
+  local text="$1" color="$2" tag="" rest=""
   if [[ "$text" == *" "* ]]; then
     tag="${text%% *}"
     rest="${text#"$tag"}"

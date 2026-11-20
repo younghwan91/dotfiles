@@ -28,7 +28,7 @@ done
 if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
   B=$'\e[1m' D=$'\e[2m' R=$'\e[0m' GRN=$'\e[32m' CYN=$'\e[36m' YLW=$'\e[33m' RED=$'\e[31m'
 else
-  B= D= R= GRN= CYN= YLW= RED=
+  B='' D='' R='' GRN='' CYN='' YLW='' RED=''
 fi
 
 dotfiles="$HOME/git/dotfiles"

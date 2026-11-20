@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # push 가 끝나면 다른 PC 에서 pull-all 을 돌린다 — pre-push 에서 부른다.
 #
 # 양쪽 PC 에서 번갈아 작업하니 매번 "풀올"을 손으로 치던 것을 없앤다.
@@ -50,8 +51,8 @@ push_sync_after() {
     # (보류·건너뜀·접속 실패) 이 백그라운드 작업이 로그 한 줄 없이 죽는다 (2026-09-16).
     set +euo pipefail
     # 푸시가 원격에 반영될 때까지 최대 2분 기다린다. 끝내 안 되면 푸시 실패로 보고 멈춘다.
-    local i ok=0
-    for i in $(seq 1 60); do
+    local ok=0
+    for _ in $(seq 1 60); do
       ok=1
       local args=("$@")
       local k
