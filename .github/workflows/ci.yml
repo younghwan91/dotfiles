@@ -48,5 +48,7 @@ jobs:
         run: bash tests/test_gh_protect.sh
       - name: pull-all
         run: bash tests/test_pull_all.sh
+      - name: check_no_personal self-test
+        run: bash tests/test_check_no_personal.sh
       - name: update prints its steps
         run: (command -v zsh || sudo apt-get install -y zsh) && bash tests/test_update_steps.sh
