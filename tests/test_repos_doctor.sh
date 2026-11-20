@@ -30,5 +30,14 @@ out=$(DOTFILES_PERSONAL="$T/p" "$REPO/bin/repos-doctor" "$T/git" 2>&1)
 grep -A3 "husky" <<<"$out" | grep -q "위임 없음" && { echo "FAIL husky repo warned"; fail=1; }
 grep -A3 "own" <<<"$out" | grep -q "위임 없음" || { echo "FAIL .githooks repo without delegation not reported"; echo "$out" | tail -8; fail=1; }
 
-[ $fail -eq 0 ] && echo "test_repos_doctor: 4/4 pass"
+# 로컬 ~/.ssh/config 에 공통 호스트가 다시 생기면 경고한다
+mkdir -p "$T/p/ssh" "$HOME/.ssh"; printf 'Host box alias\n    HostName box.example\n' > "$T/p/ssh/config"
+printf 'Host mine\n    User me\n' > "$HOME/.ssh/config"
+out=$(DOTFILES_PERSONAL="$T/p" "$REPO/bin/repos-doctor" "$T/git" 2>&1)
+grep -q "공통 호스트가 또 있다" <<<"$out" && { echo "FAIL ssh drift false positive"; fail=1; }
+printf 'Host alias\n    HostName other.example\n' >> "$HOME/.ssh/config"
+out=$(DOTFILES_PERSONAL="$T/p" "$REPO/bin/repos-doctor" "$T/git" 2>&1)
+grep -q "공통 호스트가 또 있다: alias" <<<"$out" || { echo "FAIL ssh drift not reported"; fail=1; }
+
+[ $fail -eq 0 ] && echo "test_repos_doctor: 6/6 pass"
 exit $fail
