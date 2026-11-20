@@ -170,9 +170,14 @@ def main() -> int:
             print(f"  {e}", file=sys.stderr)
         return 1
 
-    while free and not free[-1].strip():
-        free.pop()
-    out: list[str] = list(free)
+    # 블록 사이 구분 빈 줄은 다음 실행 때 관리 밖 줄로 읽힌다. 연속 빈 줄을 하나로 줄이지 않으면
+    # 블록 뒤에 손으로 둔 줄이 있을 때 실행마다 빈 줄이 블록 수만큼 쌓였다(2026-11-21).
+    out: list[str] = []
+    for line in free:
+        if line.strip() or (out and out[-1].strip()):
+            out.append(line)
+    while out and not out[-1].strip():
+        out.pop()
     for repo in sorted(new_blocks):
         out += [""] + new_blocks[repo]
     new = "\n".join(out).lstrip("\n") + "\n"
