@@ -355,9 +355,7 @@ def keys_only(w, h):
         return True
     if cmd == "sed" and re.search(r"s/=\.\*/[^/]{0,16}/", joined):
         return True
-    if cmd in ("awk", "gawk") and re.search(r"-F\s*['\"]?=", joined) and re.search(r"print\s+\$1\s*\}", joined):
-        return True
-    return False
+    return bool(cmd in ("awk", "gawk") and re.search(r"-F\s*['\"]?=", joined) and re.search(r"print\s+\$1\s*\}", joined))
 
 
 def secret_tokens(w, cwd):
@@ -461,9 +459,8 @@ def env_dump_reason(pipe):
             while j < len(w) and w[j].startswith("-"):
                 j += 2 if w[j] in ("-e", "--env", "-u", "--user", "-w", "--workdir", "--env-file") else 1
             inner = w[j + 1:]
-            if (inner == ["env"] or inner == ["printenv"] or (inner[:1] == ["printenv"] and any(is_secret_var(a) for a in inner[1:]))):
-                if not tail_masked:
-                    return "docker exec env"
+            if (inner == ["env"] or inner == ["printenv"] or (inner[:1] == ["printenv"] and any(is_secret_var(a) for a in inner[1:]))) and not tail_masked:
+                return "docker exec env"
         if cmd in ("echo", "printf"):
             raw = strip_subst(seg)
             for m in re.finditer(r"\$\{?([A-Za-z_][A-Za-z0-9_]*)([^}]*)\}?", raw):
@@ -552,9 +549,8 @@ def danger_reason(seg, cwd):
     if cmd in ("mkfs", "wipefs") or cmd.startswith("mkfs.") or (cmd == "dd" and any(a.startswith("of=/dev/") for a in args)):
         return "Disk format/overwrite."
 
-    if cmd in SQL_INTERP or (cmd == "docker" and any(x in SQL_INTERP for x in w)):
-        if sql_danger(seg):
-            return SQL_MSG
+    if (cmd in SQL_INTERP or (cmd == "docker" and any(x in SQL_INTERP for x in w))) and sql_danger(seg):
+        return SQL_MSG
     return None
 
 
@@ -769,7 +765,7 @@ def check_bash(cmd, cwd, ctx_load=False, depth=0):
     for before, body in inner:
         # 치환 결과는 갇힌다(출력 아님) — 환경변수 출력 판정은 하지 않고, 비밀 읽기는 불러 쓰기 맥락이면 통과
         r = check_bash(body, cwd, ctx_load=ctx_load or bool(LOAD_CTX.search(before)), depth=depth + 1)
-        if r and not (r[0] == "env"):
+        if r and r[0] != "env":
             return r
     return None
 
