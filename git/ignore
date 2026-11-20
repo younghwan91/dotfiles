@@ -1,0 +1,6 @@
+# 전역 gitignore — git 기본 위치 ~/.config/git/ignore 로 링크된다 (install.sh).
+**/.claude/settings.local.json
+
+# graphify 그래프는 PC마다 코드에서 다시 만든다 (필요할 때 `graphify update .`).
+# 커밋하면 매 커밋 수 MB diff·PC 간 병합 충돌·공개 레포 노출.
+graphify-out/

@@ -1,0 +1,6 @@
+# ~/.zshenv — ~/git/dotfiles 가 관리한다. `ssh host cmd` 를 포함해 모든 zsh 가 읽는다.
+# 작고 조용하게 유지한다. 비밀값은 ~/.zshenv.local 에 (커밋하지 않음).
+export PATH="$HOME/.local/bin:$PATH"
+# Ubuntu 의 /etc/zsh/zshrc 도 compinit 을 돌린다. oh-my-zsh 가 자체로 돌리니 중복은 건너뛴다.
+skip_global_compinit=1
+[[ -r ~/.zshenv.local ]] && source ~/.zshenv.local

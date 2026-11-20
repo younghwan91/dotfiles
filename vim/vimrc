@@ -1,0 +1,409 @@
+" git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim -> 이거 먼저 실행
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" => Vundle 플러그인 관리자
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" 처음 여는 머신이면 Vundle 을 받아오고 플러그인을 설치한다(dotfiles).
+let s:fresh = !isdirectory(expand('~/.vim/bundle/Vundle.vim'))
+if s:fresh && executable('git')
+  silent !git clone -q https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim
+endif
+set rtp+=~/.vim/bundle/Vundle.vim
+call vundle#begin()
+
+" Vundle 이 Vundle 자신을 관리
+Plugin 'VundleVim/Vundle.vim'
+
+" --- 파일/프로젝트 탐색 ---
+Plugin 'scrooloose/nerdtree'                 " 파일 시스템 탐색기
+Plugin 'ctrlpvim/ctrlp.vim'                   " 파일·버퍼·MRU·태그 퍼지 검색
+Plugin 'iwataka/ctrlproj.vim'                 " 지정한 위치의 프로젝트 파일 검색
+
+" --- 코드 탐색 ---
+" 수정: 낡은 'taglist-plus' 를 'tagbar' 로 교체.
+Plugin 'majutsushi/tagbar'                    " ctags 태그를 사이드바에 표시
+
+" --- Git 연동 ---
+" 수정: 'vim-gitgutter' 와 겹치는 'vim-signify' 제거.
+Plugin 'airblade/vim-gitgutter'               " git diff 를 sign 컬럼에 표시
+Plugin 'tpope/vim-fugitive'                   " Git 래퍼
+
+" --- UI ---
+Plugin 'bling/vim-airline'                    " 상태/탭 라인
+Plugin 'nanotech/jellybeans.vim'              " 색상 테마
+Plugin 'dracula/vim', { 'name': 'dracula' }   " 색상 테마
+Plugin 'morhetz/gruvbox'                      " 색상 테마
+
+" --- 편집 ---
+Plugin 'scrooloose/nerdcommenter'             " 코드 주석 처리
+Plugin 'Lokaltog/vim-easymotion'              " 더 쉬운 모션
+Plugin 'tpope/vim-surround'                   " 따옴표/괄호로 감싸기
+Plugin 'terryma/vim-multiple-cursors'         " Sublime 스타일 다중 커서
+Plugin 'tommcdo/vim-lion'                     " 구분 기호로 텍스트 정렬
+Plugin 'chrisbra/NrrwRgn'                     " 버퍼 일부 영역만 따로 편집
+
+" --- 스니펫 및 자동 완성 ---
+" 수정: 'AutoComplPop' 제거. 자동 완성은 LSP/전용 플러그인이 더 낫다.
+Plugin 'SirVer/ultisnips'                      " 스니펫
+
+" --- 웹 개발 ---
+Plugin 'mattn/emmet-vim'                      " 약어 확장 (HTML, CSS)
+Plugin 'elzr/vim-json'                        " 더 나은 JSON 구문 강조
+Plugin 'HTML.zip'                             " HTML 약어 확장
+
+" --- 검색 및 필터링 ---
+Plugin 'rking/ag.vim'                         " The Silver Searcher 연동
+Plugin 'Quich-Filter'                         " 버퍼의 줄 필터링
+Plugin 'MultipleSearch'                       " 여러 검색 패턴 동시 강조
+
+" --- 빌드 ---
+Plugin 'xuhdev/SingleCompile'                 " 단일 소스 파일 컴파일·실행
+
+call vundle#end()
+if s:fresh
+  autocmd VimEnter * PluginInstall --sync | source $MYVIMRC
+endif
+
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" => 일반
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+set nocompatible                              " Vi 대신 Vim 기본값 사용 (필수)
+let mapleader = ","                           " 리더 키는 콤마
+set history=1000                              " 명령 히스토리 크기
+set autoread                                  " Vim 밖에서 바뀐 파일 다시 읽기
+au FocusGained,BufEnter * silent! checktime   " 포커스를 얻으면 외부 변경 확인
+
+" 파일 타입 감지, 플러그인, 들여쓰기 활성화
+filetype plugin indent on
+
+" 정규식 엔진 자동 선택
+set regexpengine=0
+
+" 버퍼 전환 동작
+try
+  set switchbuf=useopen,usetab,newtab
+  set stal=2
+catch
+endtry
+
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" => UI 및 외관
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" --- 색상 및 구문 ---
+syntax on
+set background=dark
+" 수정: 'set t_Co=256' 제거. 트루 컬러 터미널은 'termguicolors' 가 표준.
+if &term =~# '256color'
+    set t_Co=256
+endif
+set termguicolors                             " 지원 터미널에서 24비트 RGB 색상
+" 중첩 터미널에서도 배경색이 화면을 제대로 채우도록
+" Background Color Erase(BCE) 를 끈다
+set t_ut=
+silent! colorscheme gruvbox
+highlight Comment term=bold cterm=bold
+
+" --- 줄 번호 및 커서 ---
+set number                                    " 줄 번호 표시
+set relativenumber                            " 상대 줄 번호
+set cursorline                                " 현재 줄 강조
+set ruler                                     " 상태 줄에 커서 위치 표시
+
+" --- 스크롤 및 레이아웃 ---
+set so=7                                      " 커서 위아래로 7줄 여유 유지
+set laststatus=2                              " 상태 줄 항상 표시
+set cmdheight=1                               " 명령 줄 높이 1
+set foldcolumn=1                              " 왼쪽에 작은 여백
+
+" --- 메뉴 및 명령 줄 ---
+set wildmenu                                  " 향상된 명령 줄 자동 완성
+let $LANG='en'                                " 일부 환경의 글자 깨짐 방지
+set langmenu=en
+source $VIMRUNTIME/delmenu.vim
+source $VIMRUNTIME/menu.vim
+
+" --- 에러 벨 ---
+set noerrorbells                              " 소리 벨 끔
+set novisualbell                              " 화면 벨 끔
+set t_vb=
+set tm=500
+
+" --- GUI ---
+if has("gui_running")
+    set guioptions-=T                         " 툴바 없음
+    set guioptions-=e                         " 텍스트 탭 라벨
+    set guitablabel=%M\ %t
+    set guifont=Fira_Mono:h12                 " Fira Mono 폰트 (GUI 전용) - (참고: Fira\ Code 로 바꿔야 함)
+endif
+
+" --- 커서 모양 ---
+" 지원 터미널에서 모드별로 커서 모양 변경
+if $TERM =~ "xterm"
+  let &t_SI = "\e[5 q"  " 삽입 모드는 빔 커서
+  let &t_EI = "\e[2 q"  " 일반 모드는 블록 커서
+endif
+
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" => 텍스트, 탭, 들여쓰기
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" --- 들여쓰기 ---
+" 수정: 들여쓰기 단순화. 'filetype indent on' 이 cindent/smartindent 보다 낫다.
+set autoindent                                " 자동 들여쓰기
+set expandtab                                 " 탭 대신 공백
+set smarttab                                  " 줄 시작의 탭은 'shiftwidth' 따름
+set shiftwidth=4                              " 들여쓰기 너비 4
+set tabstop=4                                 " 탭 너비 4
+
+" --- 줄 바꿈 ---
+set wrap                                      " 긴 줄 줄 바꿈
+set lbr                                       " 단어 단위로 줄 바꿈
+set tw=500                                    " 줄 너비
+set whichwrap+=<,>,h,l                        " 백스페이스/화살표로 줄 넘어 이동
+
+" --- 백스페이스 ---
+set backspace=eol,start,indent                " 줄 끝·삽입 시작·들여쓰기에서 백스페이스 허용
+
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" => 파일, 버퍼, 백업
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" --- 파일 및 백업 ---
+set nobackup                                  " 백업 파일 안 만듦
+set nowb                                      " 쓰기 백업 안 함
+set noswapfile                                " 스왑 파일 안 만듦
+set hid                                       " 버려진 버퍼는 숨김
+
+" --- 인코딩 ---
+set encoding=utf8                             " UTF-8 인코딩
+set fileencoding=utf-8                        " 파일을 UTF-8 로 저장
+set tenc=utf-8                                " 터미널 인코딩 UTF-8
+set ffs=unix,dos,mac                          " Unix 파일 형식 우선
+set fencs=ucs-bom,utf-8,euc-kr,latin1         " 인코딩 감지 순서
+
+" --- Wildignore (명령 줄 자동 완성에서 무시할 파일) ---
+set wildignore=*.o,*~,*.pyc
+if has("win16") || has("win32")
+    set wildignore+=.git\*,.hg\*,.svn\*
+else
+    set wildignore+=*/.git/*,*/.hg/*,*/.svn/*,*/.DS_Store
+endif
+
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" => 검색
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+set ignorecase                                " 대소문자 무시
+set smartcase                                 " 대문자가 있으면 구분
+set hlsearch                                  " 검색 결과 강조
+set incsearch                                 " 입력하는 대로 검색
+set nowrapscan                                " 파일 끝에서 처음으로 돌아가지 않음
+set magic                                     " magic 정규식
+
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" => 키 매핑
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" --- 일반 ---
+" Space: 정방향 검색
+map <space> /
+" Ctrl+Space: 역방향 검색
+map <C-space> ?
+" <leader><Enter>: 검색 강조 해제
+map <silent> <leader><cr> :noh<cr>
+" 0: 공백이 아닌 첫 문자로 이동
+map 0 ^
+
+" --- 창 이동 ---
+" 아래 창
+map <C-j> <C-W>j
+" 위 창
+map <C-k> <C-W>k
+" 왼쪽 창
+map <C-h> <C-W>h
+" 오른쪽 창
+map <C-l> <C-W>l
+
+" --- 버퍼 ---
+" 현재 버퍼 닫기
+map <leader>bd :Bclose<cr>:tabclose<cr>gT
+" 모든 버퍼 닫기
+map <leader>ba :bufdo bd<cr>
+" 다음 버퍼
+map <leader>l :bnext<cr>
+" 이전 버퍼
+map <leader>h :bprevious<cr>
+
+" --- 탭 ---
+" 새 탭
+map <leader>tn :tabnew<cr>
+" 다른 탭 모두 닫기
+map <leader>to :tabonly<cr>
+" 현재 탭 닫기
+map <leader>tc :tabclose<cr>
+" 현재 탭 옮기기
+map <leader>tm :tabmove
+" 다음 탭
+map <leader>t<leader> :tabnext<cr>
+" 현재 파일의 디렉터리에서 새 탭
+map <leader>te :tabedit <C-r>=escape(expand("%:p:h"), " ")<cr>/
+" 현재 탭과 마지막 탭 사이 전환
+nmap <leader>tl :exe "tabn ".g:lasttab<CR>
+
+" --- 줄 옮기기 ---
+" Alt+j/k (맥은 Cmd+j/k) 로 줄을 위/아래로 이동
+nmap <M-j> mz:m+<cr>`z
+nmap <M-k> mz:m-2<cr>`z
+vmap <M-j> :m'>+<cr>`<my`>mzgv`yo`z
+vmap <M-k> :m'<-2<cr>`>my`<mzgv`yo`z
+
+if has("mac") || has("macunix")
+  nmap <D-j> <M-j>
+  nmap <D-k> <M-k>
+  vmap <D-j> <M-j>
+  vmap <D-k> <M-k>
+endif
+
+" --- 기능 키 ---
+" 창 세로 분할
+map <F3> <C-w><C-v>
+" 창 순환
+map <F4> <C-w><C-w>
+" NERDTree 토글
+map <F5> :NERDTreeToggle<cr>
+" 수정: F6 은 제거된 Taglist 대신 Tagbar 토글.
+map <F6> :TagbarToggle<cr>
+
+" --- 맞춤법 검사 ---
+" 맞춤법 검사 토글
+map <leader>ss :setlocal spell!<cr>
+" 다음 맞춤법 오류
+map <leader>sn ]s
+" 이전 맞춤법 오류
+map <leader>sp [s
+" 사전에 단어 추가
+map <leader>sa zg
+" 맞춤법 제안
+map <leader>s? z=
+
+" --- 기타 ---
+" 빠른 저장
+map <leader>w :w!<cr>
+" 현재 파일의 디렉터리로 cd
+map <leader>cd :cd %:p:h<cr>:pwd<cr>
+" 붙여넣기 모드 토글
+map <leader>pp :setlocal paste!<cr>
+" 윈도우 ^M 문자 제거
+noremap <Leader>m mmHmt:%s/<C-V><cr>//ge<cr>'tzt'm
+" 스크래치 버퍼 열기
+map <leader>q :e ~/buffer<cr>
+" 마크다운 스크래치 버퍼 열기
+map <leader>x :e ~/buffer.md<cr>
+
+" --- 비주얼 모드 ---
+" 선택한 텍스트로 검색
+vnoremap <silent> * :<C-u>call VisualSelection('', '')<CR>/<C-R>=@/<CR><CR>
+vnoremap <silent> # :<C-u>call VisualSelection('', '')<CR>?<C-R>=@/<CR><CR>
+
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" => 플러그인 설정
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" --- ctrlp.vim ---
+let g:ctrlp_custom_ignore = {
+  \ 'dir':  '\v[\/]\.(git|hg|svn)$|public$|log$|tmp$|vendor$',
+  \ 'file': '\v\.(exe|so|dll)$'
+\ }
+
+" 수정: Taglist 설정 블록 제거. Tagbar 는 설정 없이 동작한다.
+
+" 수정: 수동 'set statusline' 제거. 상태 줄은 vim-airline 이 맡는다.
+
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" => 자동 명령
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" 파일을 열면 마지막 편집 위치로 복귀
+au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
+
+" <leader>tl 용으로 마지막 탭 기억
+au TabLeave * let g:lasttab = tabpagenr()
+
+" 일부 파일 타입은 저장할 때 줄 끝 공백 제거
+if has("autocmd")
+    autocmd BufWritePre *.txt,*.js,*.py,*.wiki,*.sh,*.coffee :call CleanExtraSpaces()
+endif
+
+" 새 줄에 주석 기호 자동 삽입 안 함
+au FileType * setl fo-=cro
+
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" => 사용자 명령
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" :W - sudo 로 저장
+command! W execute 'w !sudo tee % > /dev/null' <bar> edit!
+
+" :Bclose - 창은 두고 버퍼만 닫기
+command! Bclose call <SID>BufcloseCloseIt()
+
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" => 헬퍼 함수
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" paste 가 켜져 있으면 상태 줄용 'PASTE MODE' 반환
+function! HasPaste()
+    if &paste
+        return 'PASTE MODE  '
+    endif
+    return ''
+endfunction
+
+" 줄 끝 공백 제거
+function! CleanExtraSpaces()
+    let save_cursor = getpos(".")
+    let old_query = getreg('/')
+    silent! %s/\s\+$//e
+    call setpos('.', save_cursor)
+    call setreg('/', old_query)
+endfunction
+
+" 창은 닫지 않고 버퍼 닫기
+function! <SID>BufcloseCloseIt()
+    let l:currentBufNum = bufnr("%")
+    let l:alternateBufNum = bufnr("#")
+
+    if buflisted(l:alternateBufNum)
+        buffer #
+    else
+        bnext
+    endif
+
+    if bufnr("%") == l:currentBufNum
+        new
+    endif
+
+    if buflisted(l:currentBufNum)
+        execute("bdelete! ".l:currentBufNum)
+    endif
+endfunction
+
+" 비주얼 선택 검색용 헬퍼
+function! VisualSelection(direction, extra_filter) range
+    let l:saved_reg = @"
+    execute "normal! vgvy"
+
+    let l:pattern = escape(@", "\\/.*'$^~[]")
+    let l:pattern = substitute(l:pattern, "\n$", "", "")
+
+    if a:direction == 'gv'
+        call feedkeys(":Ack '" . l:pattern . "' ")
+    elseif a:direction == 'replace'
+        call feedkeys(":%s" . '/'. l:pattern . '/')
+    endif
+
+    let @/ = l:pattern
+    let @" = l:saved_reg
+endfunction

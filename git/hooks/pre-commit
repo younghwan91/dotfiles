@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# 레포 자체 훅이 있으면 먼저 실행 (pre-commit 프레임워크 등 보존)
+#
+# `git rev-parse --git-path hooks/pre-commit` 으로 찾으면 안 된다 — core.hooksPath 가
+# 설정돼 있으면 그게 이 전역 훅 자신을 돌려줘서, 레포 훅이 조용히 한 번도 안 돈다
+# (그래서 레포 pre-commit 이 로컬에선 안 돌고 CI 에서만 터진 적이 있다).
+# .git/hooks 는 --git-common-dir 기준으로 직접 짚는다.
+LOCAL="$(git rev-parse --path-format=absolute --git-common-dir)/hooks/pre-commit"
+if [ -f "$(git rev-parse --show-toplevel)/.pre-commit-config.yaml" ]; then
+  # pre-commit 프레임워크 레포는 설치된 훅 스크립트 대신 uvx 로 직접 돌린다.
+  # `pre-commit install` 이 박아둔 INSTALL_PYTHON 은 venv·uv tool 을 지우면 죽은 경로가
+  # 된다(없는 uv tool 파이썬을 가리켜 "pre-commit not found").
+  # 설치를 안 한 레포도 같이 돈다.
+  if [ -z "${SKIP_CI_LOCAL:-}" ]; then
+    uvx pre-commit run --hook-stage pre-commit || exit $?
+  fi
+elif [ -x "$LOCAL" ]; then
+  "$LOCAL" "$@" || exit $?
+fi
+. "$(dirname "$0")/_identity-lib.sh"
+
+ae=$(git var GIT_AUTHOR_IDENT    | sed -n 's/.*<\(.*\)>.*/\1/p')
+ce=$(git var GIT_COMMITTER_IDENT | sed -n 's/.*<\(.*\)>.*/\1/p')
+if identity_check_on; then
+  for e in "$ae" "$ce"; do
+    is_allowed "$e" || die "This commit's identity is not in the allowlist: $e"
+  done
+fi

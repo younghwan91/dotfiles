@@ -1,0 +1,20 @@
+# Google Drive 를 ~/gdrive 에. install.sh 가 ~/.config/systemd/user/ 에 링크하고
+# `gdrive` 리모트가 생기면 켠다 (setup/MANUAL.md §3).
+[Unit]
+Description=rclone mount of Google Drive at ~/gdrive
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=notify
+# rclone 은 설치 방법에 따라 ~/.local/bin 이나 /usr/bin 에 있다.
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+ExecStartPre=/usr/bin/mkdir -p %h/gdrive
+ExecStart=/usr/bin/env rclone mount gdrive: %h/gdrive \
+    --vfs-cache-mode full --vfs-cache-max-size 20G --dir-cache-time 1h --poll-interval 1m
+ExecStop=/usr/bin/fusermount3 -uz %h/gdrive
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=default.target

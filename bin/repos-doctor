@@ -1,0 +1,135 @@
+#!/usr/bin/env bash
+# repos-doctor — 조용히 고장 난 git·hook·환경 설정을 찾는다. 아무것도 고치지 않는다.
+#
+#   repos-doctor              # ~/git (또는 $PULL_ALL_ROOT) 아래 레포 점검, 문제만 출력
+#   repos-doctor -v           # 정상인 레포도 출력
+#   repos-doctor ~/src        # 다른 디렉터리
+#
+# 2026-09-15~16 에 손으로 찾아낸 고장들을 자동으로 잡는다:
+#   - 레포 core.hooksPath 가 옛 경로를 가리켜 신원 검사가 안 돎 (레포를 옮긴 뒤)
+#   - 레포 전용 hooks 폴더(.githooks)에 전역 훅 위임이 빠짐 (pre-push·post-merge)
+#   - .venv 실행 파일 shebang 이 옮기기 전 경로 → mypy/pytest 실행 불가
+#   - graphify-out/ 이 무시되지 않음, 그래프 없음
+#   - 전역 링크(~/.gitconfig, ~/.config/git/hooks·ignore) 끊김, ci-gate 인데 gh 미인증, 상대 PC ssh 불가
+# 종료 코드: 문제가 하나라도 있으면 1.
+set -uo pipefail
+
+verbose=0
+roots=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -v|--verbose) verbose=1; shift ;;
+    -h|--help) sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *) roots+=("$1"); shift ;;
+  esac
+done
+[ ${#roots[@]} -eq 0 ] && roots=("${PULL_ALL_ROOT:-$HOME/git}")
+
+if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
+  B=$'\e[1m' D=$'\e[2m' R=$'\e[0m' GRN=$'\e[32m' CYN=$'\e[36m' YLW=$'\e[33m' RED=$'\e[31m'
+else
+  B= D= R= GRN= CYN= YLW= RED=
+fi
+
+dotfiles="$HOME/git/dotfiles"
+problems=0
+say_bad()  { printf "  ${RED}✗${R} %s\n" "$1"; problems=$((problems + 1)); }
+say_warn() { printf "  ${YLW}●${R} %s\n" "$1"; problems=$((problems + 1)); }
+say_ok()   { [ $verbose = 1 ] && printf "  ${GRN}✓${R} %s\n" "$1"; return 0; }
+
+host=$(hostname -s 2>/dev/null || hostname)
+echo "${B}${CYN}▸ ${host}${R}  ${D}$(date '+%F %T') · repos-doctor${R}"
+
+# ── 전역 설정 ──────────────────────────────────────────────────────────────
+check_link() {  # check_link <대상> <기대하는 원본>
+  if [ "$(readlink "$1" 2>/dev/null)" = "$2" ]; then say_ok "${1/#$HOME/~} → dotfiles"
+  else say_bad "${1/#$HOME/~} 가 dotfiles 를 가리키지 않음 (install.sh 다시 실행)"; fi
+}
+check_link "$HOME/.gitconfig"          "$dotfiles/git/gitconfig"
+check_link "$HOME/.config/git/hooks"   "$dotfiles/git/hooks"
+check_link "$HOME/.config/git/ignore"  "$dotfiles/git/ignore"
+profile=$(cat "$HOME/.config/dotfiles/profile" 2>/dev/null || echo "")
+personal=${DOTFILES_PERSONAL:-$dotfiles/personal}
+case "$profile" in
+  personal)
+    check_link "$HOME/.config/git/profile.gitconfig" "$personal/git/gitconfig"
+    check_link "$HOME/.config/git/allowed-emails"    "$personal/git/allowed-emails"
+    check_link "$HOME/.config/git/blocked-domains"   "$personal/git/blocked-domains" ;;
+  vanilla) say_ok "프로필 vanilla" ;;
+  *) say_warn "프로필이 없다 — install.sh --profile vanilla|personal 실행" ;;
+esac
+
+command -v graphify >/dev/null 2>&1 && say_ok "graphify 설치됨" || say_warn "graphify 없음 (uv tool install graphifyy && graphify install --platform claude)"
+[ -f "$HOME/.claude/skills/graphify/SKILL.md" ] && say_ok "graphify 스킬 설치됨" || say_warn "graphify 스킬 없음 (graphify install --platform claude)"
+# graphify install 은 CLAUDE.md 의 '# graphify' 섹션을 통째로 다시 쓴다 — 사용 기준은 별도 최상위 섹션이어야 살아남는다.
+grep -q '^# When to use graphify' "$dotfiles/claude/CLAUDE.md" && say_ok "CLAUDE.md graphify 사용 기준 있음" || say_bad "CLAUDE.md 에 '# When to use graphify' 섹션이 없음 (graphify install 이 지웠을 수 있다)"
+
+flags=$(git config --get sync.pullFlags 2>/dev/null || true)
+if [[ "$flags" == *--ci-gate* ]]; then
+  gh auth status >/dev/null 2>&1 && say_ok "gh 인증됨 (ci-gate)" || say_bad "sync.pullFlags 가 --ci-gate 인데 gh 미인증 — 전부 hold 된다"
+fi
+
+peers=$(git config --get sync.peers 2>/dev/null || true)
+for p in $peers; do
+  ssh -o BatchMode=yes -o ConnectTimeout=5 "$p" true 2>/dev/null \
+    && say_ok "ssh $p" || say_bad "ssh $p 불가 — push 후 상대 PC 동기화가 안 된다"
+done
+
+# ── 레포별 ─────────────────────────────────────────────────────────────────
+delegated_hooks="pre-push post-commit post-checkout post-merge"
+
+for root in "${roots[@]}"; do
+  for d in "$root"/*/; do
+    d=${d%/}; [ -e "$d/.git" ] || continue
+    n=$(basename "$d")
+    before=$problems
+    out=()
+
+    # 1. 레포 전용 core.hooksPath
+    hp=$(git -C "$d" config --local --get core.hooksPath 2>/dev/null || true)
+    if [ -n "$hp" ]; then
+      case "$hp" in
+        /*|~*) out+=("${RED}✗${R} core.hooksPath 가 절대경로 $hp — 전역 훅(신원 검사·동기화)이 안 돈다"); problems=$((problems + 1)) ;;
+        *)
+          if [ ! -d "$d/$hp" ]; then
+            out+=("${RED}✗${R} core.hooksPath=$hp 폴더가 없음"); problems=$((problems + 1))
+          else
+            missing=()
+            for h in $delegated_hooks; do
+              grep -q '.config/git/hooks' "$d/$hp/$h" 2>/dev/null || missing+=("$h")
+            done
+            [ ${#missing[@]} -gt 0 ] && { out+=("${YLW}●${R} $hp 에 전역 훅 위임 없음: ${missing[*]}"); problems=$((problems + 1)); }
+          fi ;;
+      esac
+    fi
+
+    # 2. .venv 실행 파일 shebang
+    if [ -d "$d/.venv/bin" ]; then
+      for s in pytest mypy ruff pip; do
+        f="$d/.venv/bin/$s"; [ -f "$f" ] || continue
+        interp=$(head -1 "$f" | sed -n 's/^#!\([^ ]*\).*/\1/p')
+        if [ -n "$interp" ] && [ ! -x "$interp" ]; then
+          out+=("${RED}✗${R} .venv/bin/$s shebang 이 없는 경로: $interp — uv sync --reinstall")
+          problems=$((problems + 1)); break
+        fi
+      done
+    fi
+
+    # 3. graphify 그래프 — 자동 갱신 훅은 2026-10-19 제거. 그래프가 없어도 문제가 아니고, 있으면 커밋되지 않는지만 본다.
+    if [ -d "$d/graphify-out" ] && ! git -C "$d" check-ignore -q graphify-out/graph.json 2>/dev/null; then
+      out+=("${RED}✗${R} graphify-out/ 이 무시되지 않음 — 커밋될 수 있다"); problems=$((problems + 1))
+    fi
+    [ -n "$(git -C "$d" ls-files -- graphify-out 2>/dev/null)" ] && { out+=("${RED}✗${R} graphify-out/ 이 git 에 추적되고 있음"); problems=$((problems + 1)); }
+
+    if [ $problems -gt $before ]; then
+      echo "  ${B}$n${R}"
+      for line in "${out[@]}"; do echo "    $line"; done
+    else
+      say_ok "$n"
+    fi
+  done
+done
+
+if [ $problems -eq 0 ]; then echo "  ${D}──${R} ${GRN}문제 없음${R}"
+else echo "  ${D}──${R} ${RED}${problems}개 문제${R}"; fi
+[ $problems -eq 0 ]

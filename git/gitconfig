@@ -1,0 +1,27 @@
+# ~/.gitconfig — ~/git/dotfiles 가 관리한다.
+# 이름·메일은 프로필 파일(~/.config/git/profile.gitconfig) 이나 ~/.gitconfig.local 에 둔다.
+# 자격증명 헬퍼와 호스트별 설정도 ~/.gitconfig.local 에.
+[user]
+	# 호스트 이름으로 신원을 추측하지 않는다 — 추측한 잘못된 메일이
+	# 공개 히스토리에 들어간 적이 있다.
+	useConfigOnly = true
+[core]
+	editor = vim
+	autocrlf = input
+	# 전역 신원 가드 (pre-commit / pre-push). 레포 자체 훅이 여전히 먼저 돈다.
+	hooksPath = ~/.config/git/hooks
+[init]
+	defaultBranch = main
+[pull]
+	ff = only
+[alias]
+	tree = log --oneline --graph --all --decorate --color=always
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+[include]
+	path = ~/.config/git/profile.gitconfig
+[include]
+	path = ~/.gitconfig.local

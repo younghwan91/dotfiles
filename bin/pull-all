@@ -1,0 +1,156 @@
+#!/usr/bin/env bash
+# pull-all — 하나 이상의 디렉터리 안 git 레포를 모두 fast-forward 한다.
+#
+#   pull-all                 # $PULL_ALL_ROOT(없으면 ~/git) 아래 레포
+#   pull-all ~/src ~/work    # 이 디렉터리들 아래 레포
+#   pull-all -j 8            # 8개 레포를 병렬로 fetch (기본 4)
+#   pull-all --ci-gate       # GitHub 체크가 초록인 커밋으로만 fast-forward
+#   pull-all --check         # fetch 후 뒤처진 레포만 보고, 아무것도 바꾸지 않음
+#
+# merge·rebase·stash 는 절대 하지 않는다: 미커밋 변경, upstream 없음,
+# detached HEAD, 갈라진 히스토리인 레포는 보고만 하고 그대로 둔다.
+# 실패했거나 --ci-gate 로 보류됐거나 --check 에서 뒤처진 레포가 있으면 종료코드 1.
+# 출력이 터미널이 아니거나 NO_COLOR 가 있으면 색을 끈다.
+#
+# --ci-gate 는 운영 호스트용이다: 아침 동기화가 밤사이 에이전트가 올린
+# CI 빨간 커밋을 받으면 안 된다. 보류된 레포는 어제 코드에 머물고 "hold" 로 보고된다.
+# 체크가 아직 도는 중이거나 워크플로는 있는데 체크가 아직 없어도 hold. 워크플로가 없으면 받는다.
+set -uo pipefail
+
+jobs=4
+roots=()
+export PULL_ALL_CI_GATE=0 PULL_ALL_CHECK=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -j|--jobs) jobs="${2:?-j 에는 숫자가 필요하다}"; shift 2 ;;
+    --ci-gate) PULL_ALL_CI_GATE=1; shift ;;
+    --check) PULL_ALL_CHECK=1; shift ;;
+    -h|--help) sed -n '2,17p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *) roots+=("$1"); shift ;;
+  esac
+done
+[ ${#roots[@]} -eq 0 ] && roots=("${PULL_ALL_ROOT:-$HOME/git}")
+
+if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
+  B=$'\e[1m' D=$'\e[2m' R=$'\e[0m'
+  GRN=$'\e[32m' CYN=$'\e[36m' YLW=$'\e[33m' RED=$'\e[31m' GRY=$'\e[90m'
+else
+  B= D= R= GRN= CYN= YLW= RED= GRY=
+fi
+
+# SSH 호스트 키·암호 프롬프트에서 멈추지 않고, 자격증명 창도 띄우지 않는다.
+export GIT_SSH_COMMAND="${GIT_SSH_COMMAND:-ssh -o BatchMode=yes}"
+export GIT_TERMINAL_PROMPT=0
+
+# 커밋을 받아도 되면 "" 를, 아니면 보류 사유를 출력한다.
+ci_verdict() {
+  local d=$1 sha=$2 url slug runs
+  url=$(git -C "$d" remote get-url origin 2>/dev/null)
+  slug=$(printf '%s' "$url" | sed -nE 's#^(https://github\.com/|git@github\.com:|ssh://git@github\.com/)([^/]+/[^/]+)/?$#\2#p')
+  slug=${slug%.git}
+  [ -z "$slug" ] && { echo "origin 이 GitHub 가 아니다 — CI 를 확인할 수 없다"; return; }
+  if ! runs=$(gh api "repos/$slug/commits/$sha/check-runs?per_page=100" \
+        --jq '.check_runs[] | "\(.status)|\(.conclusion // "")|\(.name)"' 2>/dev/null); then
+    echo "gh api 실패 — CI 를 확인할 수 없다"; return
+  fi
+  if [ -z "$runs" ]; then
+    git -C "$d" ls-tree -r --name-only "$sha" -- .github/workflows 2>/dev/null | grep -qE '\.ya?ml$' \
+      && echo "${sha:0:7} 에 아직 체크 없음 (no check runs yet)" || true
+    return
+  fi
+  local bad
+  bad=$(printf '%s\n' "$runs" | awk -F'|' '$1!="completed"{print $3" running"; next}
+        $2!="success" && $2!="skipped" && $2!="neutral"{print $3" "$2}' | head -3 | paste -sd, -)
+  [ -n "$bad" ] && echo "${sha:0:7} 의 CI 가 초록이 아님: $bad"
+  return 0
+}
+export -f ci_verdict
+
+# 레포 하나 -> 한 줄: "<상태>\t<이름>\t<상세>"
+check() {
+  local d=$1 n; n=$(basename "$d"); [ "$n" = personal ] && n="$(basename "$(dirname "$d")")/personal"
+  local branch; branch=$(git -C "$d" symbolic-ref -q --short HEAD) \
+    || { printf 'skip\t%s\tdetached HEAD 상태\n' "$n"; return; }
+  git -C "$d" rev-parse -q --verify '@{u}' >/dev/null 2>&1 \
+    || { printf 'none\t%s\tupstream 없음\n' "$n"; return; }
+  [ -z "$(git -C "$d" status --porcelain --untracked-files=no)" ] \
+    || { printf 'skip\t%s\t%s 에 커밋 안 한 변경\n' "$n" "$branch"; return; }
+  grep -qxF "$(git -C "$d" rev-parse --path-format=absolute --git-common-dir)" "$PULL_ALL_FETCH_FAILED" \
+    && { printf 'fail\t%s\tfetch 실패\n' "$n"; return; }
+  local before; before=$(git -C "$d" rev-parse --short HEAD)
+  local behind; behind=$(git -C "$d" rev-list --count 'HEAD..@{u}')
+  if [ "$PULL_ALL_CHECK" = 1 ]; then
+    local ahead; ahead=$(git -C "$d" rev-list --count '@{u}..HEAD')
+    if [ "$behind" -gt 0 ] && [ "$ahead" -gt 0 ]; then printf 'fail\t%s\t%s 가 upstream 과 갈라짐\n' "$n" "$branch"
+    elif [ "$behind" -gt 0 ]; then printf 'behind\t%s\t%s 에서 커밋 %s개 뒤처짐\n' "$n" "$branch" "$behind"
+    elif [ "$ahead" -gt 0 ]; then printf 'ahead\t%s\t푸시 안 한 커밋 %s개\n' "$n" "$ahead"
+    else printf 'ok\t%s\t%s\n' "$n" "$branch"; fi
+    return
+  fi
+  if [ "$PULL_ALL_CI_GATE" = 1 ] && [ "$behind" -gt 0 ]; then
+    local why; why=$(ci_verdict "$d" "$(git -C "$d" rev-parse '@{u}')")
+    [ -n "$why" ] && { printf 'hold\t%s\t%s — %s 에 머묾\n' "$n" "$why" "$before"; return; }
+  fi
+  if git -C "$d" merge -q --ff-only '@{u}' >/dev/null 2>&1; then
+    local after; after=$(git -C "$d" rev-parse --short HEAD)
+    if [ "$before" = "$after" ]; then
+      local ahead; ahead=$(git -C "$d" rev-list --count '@{u}..HEAD')
+      [ "$ahead" -gt 0 ] && printf 'ahead\t%s\t푸시 안 한 커밋 %s개\n' "$n" "$ahead" \
+                         || printf 'ok\t%s\t%s\n' "$n" "$branch"
+    else
+      printf 'upd\t%s\t%s → %s  (커밋 %s개)\n' "$n" "$before" "$after" \
+        "$(git -C "$d" rev-list --count "$before..$after")"
+    fi
+  else
+    printf 'fail\t%s\t%s 가 upstream 과 갈라짐\n' "$n" "$branch"
+  fi
+}
+export -f check
+
+repos=()
+for root in "${roots[@]}"; do
+  [ -d "$root" ] || { echo "${RED}디렉터리 없음:${R} $root" >&2; continue; }
+  for d in "$root"/*/; do [ -e "$d/.git" ] && repos+=("${d%/}"); done
+  # 레포 안에 clone 된 personal 레포(dotfiles/personal 같은 별도 비공개 레포)도 받는다
+  for d in "$root"/*/personal/; do [ -e "$d/.git" ] && repos+=("${d%/}"); done
+done
+[ ${#repos[@]} -eq 0 ] && { echo "${YLW}git 레포를 찾지 못함:${R} ${roots[*]}"; exit 0; }
+
+host=$(hostname -s 2>/dev/null || hostname)
+mode=; [ "$PULL_ALL_CI_GATE" = 1 ] && mode=" · ci-gate"; [ "$PULL_ALL_CHECK" = 1 ] && mode=" · 점검만"
+echo "${B}${CYN}▸ ${host}${R}  ${D}$(date '+%F %T') · ${roots[*]} · 레포 ${#repos[@]}개${mode}${R}"
+
+# 체크아웃마다가 아니라 저장소마다 한 번 fetch 한다: 메인 체크아웃과 그 워크트리들은
+# .git 하나를 같이 써서, 병렬로 fetch 하면 ref 잠금 경쟁으로 "fetch 실패" 가 난다.
+export PULL_ALL_FETCH_FAILED; PULL_ALL_FETCH_FAILED=$(mktemp); trap 'rm -f "$PULL_ALL_FETCH_FAILED"' EXIT
+fetch_one() { git -C "$1" fetch -q --prune 2>/dev/null || echo "$1" >> "$PULL_ALL_FETCH_FAILED"; }
+export -f fetch_one
+for d in "${repos[@]}"; do git -C "$d" rev-parse --path-format=absolute --git-common-dir 2>/dev/null; done \
+  | sort -u | tr '\n' '\0' | xargs -0 -P "$jobs" -I{} bash -c 'fetch_one "$1"' _ {}
+
+results=$(printf '%s\0' "${repos[@]}" | xargs -0 -P "$jobs" -I{} bash -c 'check "$1"' _ {} | sort -t$'\t' -k2,2)
+
+w=0
+while IFS=$'\t' read -r _ n _; do [ ${#n} -gt $w ] && w=${#n}; done <<< "$results"
+
+n_ok=0 n_upd=0 n_skip=0 n_fail=0 n_hold=0
+while IFS=$'\t' read -r st name detail; do
+  case $st in
+    ok)    n_ok=$((n_ok+1));     icon="${GRN}✓${R}"; col=$GRY ;;
+    upd)   n_upd=$((n_upd+1));   icon="${CYN}↓${R}"; col=$CYN ;;
+    ahead) n_ok=$((n_ok+1));     icon="${YLW}↑${R}"; col=$YLW ;;
+    skip)  n_skip=$((n_skip+1)); icon="${YLW}●${R}"; col=$YLW ;;
+    none)  n_skip=$((n_skip+1)); icon="${GRY}–${R}"; col=$GRY ;;
+    fail)  n_fail=$((n_fail+1)); icon="${RED}✗${R}"; col=$RED ;;
+    hold|behind) n_hold=$((n_hold+1)); icon="${RED}⏸${R}"; col=$RED ;;
+  esac
+  printf "  %s %-${w}s  %s%s%s\n" "$icon" "$name" "$col" "$detail" "$R"
+done <<< "$results"
+
+summary="${GRN}최신 ${n_ok}개${R}"
+[ $n_upd  -gt 0 ] && summary+=" · ${CYN}갱신 ${n_upd}개${R}"
+[ $n_skip -gt 0 ] && summary+=" · ${YLW}건너뜀 ${n_skip}개${R}"
+[ $n_fail -gt 0 ] && summary+=" · ${RED}실패 ${n_fail}개${R}"
+[ $n_hold -gt 0 ] && summary+=" · ${RED}${n_hold}개 $([ "$PULL_ALL_CHECK" = 1 ] && echo 뒤처짐 || echo "CI 보류 (held by CI)")${R}"
+echo "  ${D}──${R} $summary"
+[ $n_fail -eq 0 ] && [ $n_hold -eq 0 ]

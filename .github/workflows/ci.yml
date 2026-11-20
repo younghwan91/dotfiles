@@ -1,0 +1,22 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: guard tests
+        run: python3 claude/hooks/test_guard.py && python3 claude/hooks/test_guard_extra.py
+      - name: no personal info outside personal/
+        run: python3 tests/check_no_personal.py
+      - name: identity hooks
+        run: bash tests/test_identity.sh
+      - name: cron-install personal/ crontab
+        run: bash tests/test_cron_install.sh
+      - name: install profiles
+        run: bash tests/test_install.sh
+      - name: update prints its steps
+        run: (command -v zsh || sudo apt-get install -y zsh) && bash tests/test_update_steps.sh

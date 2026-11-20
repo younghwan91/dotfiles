@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# 레포 자체 post-merge 가 있으면 먼저 실행 (git-lfs 등 보존)
+LOCAL="$(git rev-parse --path-format=absolute --git-common-dir)/hooks/post-merge"
+if [ -x "$LOCAL" ]; then
+  "$LOCAL" "$@" || true
+fi
+exit 0

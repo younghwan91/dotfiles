@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# 레포 훅 경로를 --git-path 로 찾으면 core.hooksPath 때문에 자기 자신이 나온다 — pre-commit 주석 참고
+LOCAL="$(git rev-parse --path-format=absolute --git-common-dir)/hooks/pre-push"
+if [ -x "$LOCAL" ]; then
+  "$LOCAL" "$@" || exit $?
+fi
+. "$(dirname "$0")/_identity-lib.sh"
+check_ids=0; identity_check_on && check_ids=1
+block_re=$(blocked_domain_re)
+
+z=0000000000000000000000000000000000000000
+shas=()
+synced=()   # 푸시한 브랜치의 "원격ref sha" 쌍 — 끝에서 다른 PC 동기화에 쓴다
+while read -r _lref lsha rref rsha; do
+  [ "$lsha" = "$z" ] && continue                      # 삭제 푸시
+  if [ "$rsha" = "$z" ]; then range="$lsha --not --remotes"; else range="$rsha..$lsha"; fi
+  if [ $check_ids = 1 ]; then
+    while IFS='|' read -r sha ae ce; do
+      [ -z "$sha" ] && continue
+      for e in "$ae" "$ce"; do
+        is_allowed "$e" || die "Identity of commit $sha being pushed is not in the allowlist: $e"
+      done
+    done < <(git log --format='%H|%ae|%ce' $range 2>/dev/null)
+  fi
+  # 커밋 메시지 본문에 막을 도메인이 적힌 경우도 막는다
+  if [ -n "$block_re" ]; then
+    bad=$(git log --format='%H %B' $range 2>/dev/null | grep -iE "$block_re" | head -1 || true)
+    [ -n "$bad" ] && die "A commit message being pushed contains a blocked domain: $bad"
+  fi
+
+  # 태그 푸시는 이미 브랜치로 검사된 커밋이다 — CI 재실행은 브랜치만.
+  # 로컬 ref 가 아니라 **원격 ref** 로 판정한다: `git push origin HEAD:main` 이면 로컬 ref 가
+  # `HEAD` 로 넘어와 refs/heads/* 조건을 빠져나갔다(2026-09-15, 세 레포가 검사 없이 올라감).
+  case "$rref" in refs/heads/*) shas+=("$lsha"); synced+=("$rref" "$lsha") ;; esac
+done
+
+# 그 레포의 .github/workflows/ci.yml 을 푸시할 커밋 기준으로 로컬에서 돌린다.
+# CI 가 없는 레포는 ci-local 이 바로 0 으로 끝난다.
+if [ "${#shas[@]}" -gt 0 ] && command -v uv >/dev/null; then
+  for sha in $(printf '%s\n' "${shas[@]}" | sort -u); do
+    uv run --quiet --script "$(dirname "$0")/ci-local.py" "$sha" </dev/null || exit $?
+  done
+fi
+
+# 검사를 다 통과했다 — 푸시가 원격에 반영되면 다른 PC 에서 pull-all (백그라운드)
+if [ "${#synced[@]}" -gt 0 ]; then
+  . "$(dirname "$0")/_push-sync-lib.sh"
+  push_sync_after "$1" "${synced[@]}"
+fi
+exit 0

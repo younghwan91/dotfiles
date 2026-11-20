@@ -1,0 +1,205 @@
+#!/usr/bin/env python3
+"""cron-install — 레포마다 deploy/crontab.<호스트> (또는 personal/deploy/crontab.<호스트>) 를 사용자 crontab 에 설치한다.
+
+    cron-install              # 설치 (먼저 현재 crontab 을 백업)
+    cron-install --diff       # 바뀔 내용만 보여 주고 설치하지 않음
+    cron-install --prune      # 레포 폴더가 없어진 블록도 지움
+
+레포마다 울타리 친 블록 하나씩을 쓰고, 울타리 밖(thermal-tick 같은 손으로 적은 줄)은
+그대로 둔다:
+
+    # >>> managed: my-repo (deploy/crontab.host1) >>>
+    ...
+    # <<< managed: my-repo <<<
+
+왜 `crontab <파일>` 이 아니라 울타리인가: 그건 crontab 전체를 바꿔서, 한 호스트에 두
+레포가 설치하면 서로를 지우고 손으로 적은 줄도 다 지운다.
+
+안전 규칙 — 운영 작업이 이 crontab 으로 돈다:
+- crontab 파일이 없거나 못 읽는 레포는 **옛** 블록을 유지한다.
+  반쯤 깨진 체크아웃이 운영 작업을 조용히 지우면 안 된다.
+  블록은 --prune 일 때, 그것도 레포 폴더가 없어졌을 때만 지운다.
+- 주석 아닌 줄은 쓰기 전에 모두 검사한다(스케줄 5필드 + 명령; VAR=value 줄은 거부).
+  잘못된 줄이 하나라도 있으면 설치 전체를 멈춘다.
+- 설치 전 이전 crontab 을 ~/.local/state/cron-install/ 에 저장한다.
+- 링크된 git 워크트리(`.git` 이 파일)는 설치하지 않고, 거기서 남은 블록은 지운다.
+  워크트리는 메인 클론과 같은 deploy/crontab.<호스트> 를 갖고 있어서 설치하면 모든 작업이
+  두 번 돈다 — 워크트리가 데몬을 하나 더 띄워 주문이 두 번 나간 적이 있다.
+
+환경변수: CRON_REPOS_ROOT (기본 ~/git), CRON_HOST (기본 짧은 호스트 이름).
+"""
+from __future__ import annotations
+
+import difflib
+import os
+import re
+import socket
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+BEGIN = re.compile(r"^# >>> managed: (\S+) .*>>>\s*$")
+END = re.compile(r"^# <<< managed: (\S+) <<<\s*$")
+SPECIAL = {"@reboot", "@yearly", "@annually", "@monthly", "@weekly", "@daily", "@midnight", "@hourly"}
+
+
+def is_linked_worktree(path: Path) -> bool:
+    """링크된 워크트리는 메인 클론의 gitdir 을 가리키는 `.git` *파일*을 갖는다."""
+    return (path / ".git").is_file()
+
+
+def read_crontab() -> str:
+    r = subprocess.run(["crontab", "-l"], capture_output=True, text=True)
+    return r.stdout if r.returncode == 0 else ""  # "no crontab for user" → 빈 값
+
+
+def split_blocks(text: str) -> tuple[list[str], dict[str, list[str]]]:
+    """Return (unmanaged lines, {repo: block lines incl. fences})."""
+    free: list[str] = []
+    blocks: dict[str, list[str]] = {}
+    cur: str | None = None
+    for line in text.splitlines():
+        if cur is None:
+            m = BEGIN.match(line)
+            if m:
+                cur = m.group(1)
+                blocks[cur] = [line]
+            else:
+                free.append(line)
+        else:
+            blocks[cur].append(line)
+            m = END.match(line)
+            if m and m.group(1) == cur:
+                cur = None
+    if cur is not None:
+        raise SystemExit(f"cron-install: 현재 crontab 의 관리 블록 '{cur}' 이 닫히지 않았다 — 손으로 고칠 것")
+    return free, blocks
+
+
+MONTHS = "jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec"
+DAYS = "sun|mon|tue|wed|thu|fri|sat"
+
+
+def field_ok(field: str, i: int) -> bool:
+    """분 시 일 월 요일 — 이름은 cron 이 받는 자리에서만."""
+    names = {3: MONTHS, 4: DAYS}.get(i)
+    atom = rf"(\*|\d+|{names})" if names else r"(\*|\d+)"
+    item = rf"{atom}(-{atom})?(/\d+)?"
+    return re.fullmatch(rf"{item}(,{item})*", field, flags=re.IGNORECASE) is not None
+
+
+def validate(repo: str, lines: list[str]) -> list[str]:
+    errs = []
+    for n, line in enumerate(lines, 1):
+        s = line.strip()
+        if not s or s.startswith("#"):
+            continue
+        if BEGIN.match(s) or END.match(s):
+            errs.append(f"{repo}:{n}: crontab 파일 안에 관리 블록 울타리가 있다")
+            continue
+        if re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", s):
+            errs.append(f"{repo}:{n}: VAR=value 는 뒤의 모든 블록에 샌다 — 명령 안에 직접 적을 것")
+            continue
+        parts = s.split()
+        if parts[0] in SPECIAL:
+            if len(parts) < 2:
+                errs.append(f"{repo}:{n}: {parts[0]} 뒤에 명령이 없다")
+            continue
+        if len(parts) < 6:
+            errs.append(f"{repo}:{n}: 스케줄 5필드 + 명령이 필요하다: {s[:80]}")
+            continue
+        if not all(field_ok(f, i) for i, f in enumerate(parts[:5])):
+            errs.append(f"{repo}:{n}: 잘못된 스케줄 필드: {' '.join(parts[:5])}")
+    return errs
+
+
+def main() -> int:
+    args = set(sys.argv[1:])
+    if args - {"--diff", "--prune", "-h", "--help"}:
+        print(f"cron-install: 모르는 옵션: {' '.join(sorted(args - {'--diff', '--prune'}))}", file=sys.stderr)
+        return 2
+    if args & {"-h", "--help"}:
+        print(__doc__.split("\n\n")[1])
+        return 0
+
+    root = Path(os.environ.get("CRON_REPOS_ROOT", Path.home() / "git"))
+    host = os.environ.get("CRON_HOST") or socket.gethostname().split(".")[0]
+    stamp = time.strftime("%F %T")
+
+    current = read_crontab()
+    free, old_blocks = split_blocks(current)
+
+    new_blocks: dict[str, list[str]] = {}
+    errors: list[str] = []
+    notes: list[str] = []
+    found = sorted(root.glob(f"*/deploy/crontab.{host}")) + sorted(root.glob(f"*/personal/deploy/crontab.{host}"))
+    for f in found:
+        rel = f.relative_to(root)
+        repo = rel.parts[0]
+        if is_linked_worktree(root / repo):
+            notes.append(f"  - {repo}: 링크된 git 워크트리 — 건너뜀 (메인 클론이 이 작업들을 설치한다)")
+            continue
+        try:
+            body = f.read_text().rstrip("\n").splitlines()
+        except OSError as e:
+            notes.append(f"  ! {repo}: {f} 를 못 읽음 ({e}) — 옛 블록 유지")
+            continue
+        errors += validate(repo, body)
+        new_blocks[repo] = (
+            [f"# >>> managed: {repo} ({rel.relative_to(repo).as_posix()}) — cron-install 이 덮어쓴다, 레포 파일을 고칠 것 >>>"]
+            + body
+            + [f"# <<< managed: {repo} <<<"]
+        )
+
+    for repo, block in old_blocks.items():
+        if repo in new_blocks:
+            continue
+        if is_linked_worktree(root / repo):
+            notes.append(f"  - {repo}: 링크된 git 워크트리에서 온 블록 — 지움 (작업이 두 번 돈다)")
+            continue
+        if "--prune" in args and not (root / repo).is_dir():
+            notes.append(f"  - {repo}: 레포 없음, 블록 지움 (--prune)")
+        else:
+            new_blocks[repo] = block
+            notes.append(f"  ! {repo}: deploy/crontab.{host} 없음 — 옛 블록 유지")
+
+    if errors:
+        print(f"[{stamp}] ⛔ cron-install: 잘못된 줄 {len(errors)}개, 아무것도 설치하지 않음", file=sys.stderr)
+        for e in errors:
+            print(f"  {e}", file=sys.stderr)
+        return 1
+
+    while free and not free[-1].strip():
+        free.pop()
+    out: list[str] = list(free)
+    for repo in sorted(new_blocks):
+        out += [""] + new_blocks[repo]
+    new = "\n".join(out).lstrip("\n") + "\n"
+
+    diff = list(difflib.unified_diff(current.splitlines(), new.splitlines(), "current", "new", lineterm=""))
+    for n in notes:
+        print(n)
+    if not diff:
+        print(f"[{stamp}] cron-install {host}: 최신 상태 (관리 블록 {len(new_blocks)}개)")
+        return 0
+    if "--diff" in args:
+        print("\n".join(diff))
+        return 0
+
+    state = Path.home() / ".local/state/cron-install"
+    state.mkdir(parents=True, exist_ok=True)
+    backup = state / f"crontab.{time.strftime('%Y%m%d-%H%M%S')}"
+    backup.write_text(current)
+    r = subprocess.run(["crontab", "-"], input=new, text=True, capture_output=True)
+    if r.returncode != 0:
+        print(f"[{stamp}] ⛔ crontab 이 결과를 거부함: {r.stderr.strip()} — 이전 crontab 은 그대로", file=sys.stderr)
+        return 1
+    added = sum(1 for l in diff if l.startswith("+") and not l.startswith("+++"))
+    removed = sum(1 for l in diff if l.startswith("-") and not l.startswith("---"))
+    print(f"[{stamp}] cron-install {host}: 설치함 (블록 {len(new_blocks)}개, +{added}/-{removed}줄, 백업 {backup})")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
