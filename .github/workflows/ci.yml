@@ -20,5 +20,7 @@ jobs:
         run: bash tests/test_install.sh
       - name: shellcheck
         run: bash tests/test_shellcheck.sh
+      - name: powershell parses
+        run: bash tests/test_powershell.sh
       - name: update prints its steps
         run: (command -v zsh || sudo apt-get install -y zsh) && bash tests/test_update_steps.sh
