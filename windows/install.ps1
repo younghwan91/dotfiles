@@ -96,7 +96,7 @@ foreach ($p in $pairs) {
     if (-not (Test-Path $p[0])) { continue }
     $src = [IO.File]::ReadAllText($p[0]); $dst = if (Test-Path $p[1]) { [IO.File]::ReadAllText($p[1]) } else { $null }
     if ($src -ne $dst) {
-        if ($dst -ne $null -and -not (Test-Path "$($p[1]).bak")) { Copy-Item $p[1] "$($p[1]).bak" }
+        if ($null -ne $dst -and -not (Test-Path "$($p[1]).bak")) { Copy-Item $p[1] "$($p[1]).bak" }
         [IO.File]::WriteAllText($p[1], $src, (New-Object System.Text.UTF8Encoding($false)))
         Write-Host "installed: $($p[1])"
     }
