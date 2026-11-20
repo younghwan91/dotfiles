@@ -69,6 +69,12 @@ case "$profile" in
   *) say_warn "프로필이 없다 — install.sh --profile vanilla|personal 실행" ;;
 esac
 
+# Linux: <호스트>.local 은 avahi 가 알린다 — 꺼져 있으면 다른 PC 가 이 PC 를 이름으로 못 찾는다
+if [ "$(uname -s)" = Linux ] && ! grep -qi microsoft /proc/version 2>/dev/null && systemctl list-unit-files avahi-daemon.service >/dev/null 2>&1; then
+  if ! systemctl is-active -q avahi-daemon; then say_bad "avahi-daemon 이 꺼져 있다 — 다른 PC 가 $(hostname -s).local 을 못 찾는다 (sudo systemctl restart avahi-daemon)"
+  elif [ ! -f /etc/systemd/system/avahi-daemon.service.d/restart.conf ]; then say_warn "avahi-daemon 재시작 설정이 없다 — sudo bash $dotfiles/setup/avahi-restart.sh"
+  else say_ok "avahi-daemon 동작 중, 재시작 설정 있음"; fi
+fi
 command -v graphify >/dev/null 2>&1 && say_ok "graphify 설치됨" || say_warn "graphify 없음 (uv tool install graphifyy && graphify install --platform claude)"
 [ -f "$HOME/.claude/skills/graphify/SKILL.md" ] && say_ok "graphify 스킬 설치됨" || say_warn "graphify 스킬 없음 (graphify install --platform claude)"
 # graphify install 은 CLAUDE.md 의 '# graphify' 섹션을 통째로 다시 쓴다 — 사용 기준은 별도 최상위 섹션이어야 살아남는다.
