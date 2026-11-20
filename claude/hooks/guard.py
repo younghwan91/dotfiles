@@ -584,7 +584,7 @@ def runtime_checkouts():
 
 def runtime_names(crontab_text):
     # 주석 줄(# [DISABLED …] 로 꺼 둔 작업)은 크론이 돌리지 않는다 — 꺼 둔 작업의 레포를 운영으로 오인한 적이 있다.
-    out = "\n".join(l for l in crontab_text.splitlines() if not l.lstrip().startswith("#"))
+    out = "\n".join(line for line in crontab_text.splitlines() if not line.lstrip().startswith("#"))
     git = os.path.join(HOME, "git")
     names = set(re.findall(re.escape(git) + r"/([A-Za-z0-9_.-]+)", out))
     names |= set(re.findall(r"(?:~|\$HOME)/git/([A-Za-z0-9_.-]+)", out))
