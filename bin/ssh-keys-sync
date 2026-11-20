@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# ssh-keys-sync — 모든 PC 의 ~/.ssh/authorized_keys 를 같은 목록으로 맞춘다:
+#   GitHub 계정에 등록된 공개키(https://github.com/<owner>.keys) + <personal>/ssh/authorized_keys(GitHub 에 없는 키)
+# 새 PC 는 git 때문에 어차피 GitHub 에 키를 올리니, 올리는 순간 다른 PC 들에 들어갈 수 있게 된다(크론이 매일 돈다).
+# 목록에서 빠진 키(처분한 PC 등)는 지워진다.
+#
+# 잠기지 않게: GitHub 에서 못 받았거나 받은 키가 하나도 없으면 아무것도 바꾸지 않는다. 바꿀 때는
+# ~/.ssh/authorized_keys.bak-dotfiles 에 이전 것을 남긴다.
+#
+#   ssh-keys-sync            맞춘다
+#   ssh-keys-sync --check    다르면 보고만 하고 1 로 끝난다
+#   SSH_KEYS_OWNER=<login>   GitHub 계정 (기본: dotfiles origin 의 주인)
+set -euo pipefail
+check=0; [ "${1:-}" = --check ] && check=1
+dotfiles=${DOTFILES:-$HOME/git/dotfiles}
+personal=${DOTFILES_PERSONAL:-$dotfiles/personal}
+owner=${SSH_KEYS_OWNER:-$(git -C "$dotfiles" remote get-url origin 2>/dev/null | sed -E 's#.*github\.com[:/]([^/]+)/.*#\1#')}
+[ -n "$owner" ] || { echo "ssh-keys-sync: GitHub 계정을 모른다 (SSH_KEYS_OWNER)" >&2; exit 2; }
+url=${SSH_KEYS_URL:-https://github.com/$owner.keys}
+target=${SSH_KEYS_TARGET:-$HOME/.ssh/authorized_keys}
+
+gh_keys=$(curl -fsS --max-time 20 "$url") || { echo "ssh-keys-sync: $url 를 못 받음 — 그대로 둔다" >&2; exit 1; }
+gh_keys=$(grep -E '^(ssh-|ecdsa-|sk-)' <<<"$gh_keys" || true)
+[ -n "$gh_keys" ] || { echo "ssh-keys-sync: GitHub 키가 0개 — 잠길 수 있어 그대로 둔다" >&2; exit 1; }
+extra=""; [ -f "$personal/ssh/authorized_keys" ] && extra=$(grep -E '^(ssh-|ecdsa-|sk-)' "$personal/ssh/authorized_keys" || true)
+
+want=$({
+  echo "# ssh-keys-sync 가 관리한다 — 손으로 고치지 말 것. GitHub($owner) 키 + personal/ssh/authorized_keys"
+  printf '%s\n' "$gh_keys" | sed "s|\$| $owner@github|"
+  [ -n "$extra" ] && printf '%s\n' "$extra"
+} | awk '!seen[$1" "$2]++')
+
+have=$(cat "$target" 2>/dev/null || true)
+if [ "$want" = "$have" ]; then echo "ssh-keys-sync: 이미 같다 ($(grep -vc '^#' <<<"$want")개)"; exit 0; fi
+if [ $check = 1 ]; then
+  echo "ssh-keys-sync: $target 가 목록과 다르다"
+  diff <(grep -v '^#' <<<"$have" | awk '{print $1, $2}' | sort) <(grep -v '^#' <<<"$want" | awk '{print $1, $2}' | sort) | grep '^[<>]' | sed 's/^</  - 지울 키:/; s/^>/  + 더할 키:/' | cut -c1-60 || true
+  exit 1
+fi
+mkdir -p "$(dirname "$target")"; chmod 700 "$(dirname "$target")"
+[ -f "$target" ] && cp -p "$target" "$target.bak-dotfiles"
+printf '%s\n' "$want" > "$target.new" && chmod 600 "$target.new" && mv "$target.new" "$target"
+echo "ssh-keys-sync: $target 갱신 ($(grep -vc '^#' <<<"$want")개, 이전 것은 $(basename "$target").bak-dotfiles)"
