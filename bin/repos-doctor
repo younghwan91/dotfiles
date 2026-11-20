@@ -86,6 +86,12 @@ if [ "$(uname -s)" = Linux ] && ! grep -qi microsoft /proc/version 2>/dev/null &
 fi
 command -v graphify >/dev/null 2>&1 && say_ok "graphify 설치됨" || say_warn "graphify 없음 (uv tool install graphifyy && graphify install --platform claude)"
 [ -f "$HOME/.claude/skills/graphify/SKILL.md" ] && say_ok "graphify 스킬 설치됨" || say_warn "graphify 스킬 없음 (graphify install --platform claude)"
+# 전역 CLAUDE.md 는 dotfiles 를 가리켜야 PC 마다 같은 규칙을 쓴다 — install.sh 의 --claude-md 를 빠뜨려
+# 한 PC 만 옛 파일(graphify 규칙 없음)을 쓴 적이 있다
+if [ -e "$HOME/.claude" ]; then
+  [ "$(readlink "$HOME/.claude/CLAUDE.md" 2>/dev/null)" = "$dotfiles/claude/CLAUDE.md" ] && say_ok "전역 CLAUDE.md → dotfiles" \
+    || say_bad "$HOME/.claude/CLAUDE.md 가 dotfiles 를 가리키지 않음 — install.sh --claude-md"
+fi
 # graphify install 은 CLAUDE.md 의 '# graphify' 섹션을 통째로 다시 쓴다 — 사용 기준은 별도 최상위 섹션이어야 살아남는다.
 grep -q '^# When to use graphify' "$dotfiles/claude/CLAUDE.md" && say_ok "CLAUDE.md graphify 사용 기준 있음" || say_bad "CLAUDE.md 에 '# When to use graphify' 섹션이 없음 (graphify install 이 지웠을 수 있다)"
 

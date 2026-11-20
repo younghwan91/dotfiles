@@ -85,3 +85,19 @@ if ($isElevated) {
 } else {
     Write-Host "not elevated - skipped the daily dotfiles-sync task (run install.ps1 as admin once to add it)"
 }
+
+# Claude Code: the same global rules as the Linux PCs (install.sh --claude-md links them there). Copied, not
+# linked; the daily dotfiles-sync task keeps the copies current.
+$claudeDir = Join-Path $HOME '.claude'
+New-Item -ItemType Directory -Force $claudeDir | Out-Null
+$pairs = @(@((Join-Path $repo 'claude\CLAUDE.md'), (Join-Path $claudeDir 'CLAUDE.md')),
+           @((Join-Path $repo 'personal\claude\CLAUDE.md'), (Join-Path $claudeDir 'CLAUDE.personal.md')))
+foreach ($p in $pairs) {
+    if (-not (Test-Path $p[0])) { continue }
+    $src = [IO.File]::ReadAllText($p[0]); $dst = if (Test-Path $p[1]) { [IO.File]::ReadAllText($p[1]) } else { $null }
+    if ($src -ne $dst) {
+        if ($dst -ne $null -and -not (Test-Path "$($p[1]).bak")) { Copy-Item $p[1] "$($p[1]).bak" }
+        [IO.File]::WriteAllText($p[1], $src, (New-Object System.Text.UTF8Encoding($false)))
+        Write-Host "installed: $($p[1])"
+    }
+}
