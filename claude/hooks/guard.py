@@ -146,11 +146,24 @@ def split_commands(cmd):
             continue
         if not stack:
             if b.startswith("&&", i) or b.startswith("||", i):
-                cur_pipe.append(cmd[start:i]); pipelines.append(cur_pipe); cur_pipe = []; i += 2; start = i; continue
+                cur_pipe.append(cmd[start:i])
+                pipelines.append(cur_pipe)
+                cur_pipe = []
+                i += 2
+                start = i
+                continue
             if c in ";\n()" or (c == "&" and not b.startswith("&>", i) and (i == 0 or b[i - 1] not in "<>")):
-                cur_pipe.append(cmd[start:i]); pipelines.append(cur_pipe); cur_pipe = []; i += 1; start = i; continue
+                cur_pipe.append(cmd[start:i])
+                pipelines.append(cur_pipe)
+                cur_pipe = []
+                i += 1
+                start = i
+                continue
             if c == "|" and not b.startswith("||", i) and (i == 0 or b[i - 1] != ">"):
-                cur_pipe.append(cmd[start:i]); i += 1; start = i; continue
+                cur_pipe.append(cmd[start:i])
+                i += 1
+                start = i
+                continue
         i += 1
     cur_pipe.append(cmd[start:])
     pipelines.append(cur_pipe)
