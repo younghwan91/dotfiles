@@ -1,0 +1,29 @@
+# 편집기가 레포 규칙대로 저장하게 — .gitattributes(줄바꿈)와 정적 검사(CI)를 앞에서 받쳐 준다.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# cmd 는 LF 파일에서 goto 레이블을 잘못 찾을 수 있다 (.gitattributes 와 같은 규칙)
+[*.{cmd,bat}]
+end_of_line = crlf
+
+[*.{py,ps1,psd1}]
+indent_style = space
+indent_size = 4
+
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+# 줄 끝 공백 두 칸은 Markdown 줄바꿈이다
+[*.md]
+trim_trailing_whitespace = false
+
+# 앱이 직접 쓰는 파일 — 앱이 정한 모양을 건드리지 않는다
+[{zsh/p10k*.zsh,macos/karabiner.json,macos/vscode/settings.json}]
+insert_final_newline = unset
+trim_trailing_whitespace = unset
