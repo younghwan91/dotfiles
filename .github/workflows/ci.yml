@@ -38,5 +38,7 @@ jobs:
         run: bash tests/test_eol.sh
       - name: powershell scripts are ascii
         run: bash tests/test_ps1_ascii.sh
+      - name: psscriptanalyzer
+        run: bash tests/test_psscriptanalyzer.sh
       - name: update prints its steps
         run: (command -v zsh || sudo apt-get install -y zsh) && bash tests/test_update_steps.sh
