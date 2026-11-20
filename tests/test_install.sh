@@ -14,6 +14,7 @@ mkdir -p "$P/git" "$P/claude/agents"
 printf '[user]\n\tname = t\n\temail = t@example.com\n' > "$P/git/gitconfig"
 echo t@example.com > "$P/git/allowed-emails"; : > "$P/git/blocked-domains"
 echo x > "$P/claude/CLAUDE.md"; echo x > "$P/claude/agents/quant-reviewer.md"
+mkdir -p "$P/ssh"; printf 'Host box\n    HostName box.local\n' > "$P/ssh/config"
 
 fresh() { export HOME; HOME=$(mktemp -d); tmps+=("$HOME"); export BIN_DIR="$HOME/bin"; }
 inst() { "$REPO/install.sh" "$@" </dev/null >"$HOME/out.txt" 2>&1; }
@@ -57,6 +58,13 @@ cp -r "$P/." "$src/" && git -C "$src" init -q && git -C "$src" add -A \
   && git -C "$src" -c user.name=t -c user.email=t@example.com commit -qm init
 DOTFILES_PERSONAL="$HOME/p" DOTFILES_PERSONAL_REPO="$src" inst --profile personal
 if [ $? -eq 0 ] && [ -d "$HOME/p/.git" ] && points "$HOME/.config/git/allowed-emails" "$HOME/p/git/allowed-emails"; then ok; else no personal_cloned_when_missing; fi
+
+# ssh: 공유 호스트 목록을 링크하고 ~/.ssh/config 맨 위에 Include 를 한 번만 넣는다. 기존 내용은 남긴다.
+fresh; mkdir -p "$HOME/.ssh"; printf 'Host mine\n    User me\n' > "$HOME/.ssh/config"
+inst --profile personal; inst --profile personal
+if points "$HOME/.ssh/config.d/dotfiles-personal.conf" "$P/ssh/config" \
+   && [ "$(head -1 "$HOME/.ssh/config")" = 'Include config.d/*.conf' ] \
+   && [ "$(grep -c '^Include config.d' "$HOME/.ssh/config")" = 1 ] && grep -q '^Host mine' "$HOME/.ssh/config"; then ok; else no ssh_include; fi
 
 # bin/ 의 실행 파일만 링크하고, 부산물(__pycache__)을 가리키던 옛 링크는 걷는다
 fresh; mkdir -p "$BIN_DIR"; ln -s "$REPO/bin/__pycache__" "$BIN_DIR/__pycache__"

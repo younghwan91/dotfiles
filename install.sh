@@ -186,6 +186,7 @@ personal_links=(
   "$personal/git/blocked-domains:$HOME/.config/git/blocked-domains"
   "$personal/claude/CLAUDE.md:$HOME/.claude/CLAUDE.personal.md"
 )
+[ -f "$personal/ssh/config" ] && personal_links+=("$personal/ssh/config:$HOME/.ssh/config.d/dotfiles-personal.conf")
 for f in "$personal"/claude/agents/*.md; do
   [ -e "$f" ] && personal_links+=("$f:$HOME/.claude/agents/$(basename "$f")")
 done
@@ -198,13 +199,23 @@ done
 if [ $profile = vanilla ]; then
   # personal 링크, 그리고 프로필 도입 전 옛 위치(git/allowed-emails, claude/agents)를 가리키는 끊긴 링크
   for dst in ~/.config/git/profile.gitconfig ~/.config/git/allowed-emails ~/.config/git/blocked-domains \
-             ~/.claude/CLAUDE.personal.md ~/.claude/agents/*.md; do
+             ~/.claude/CLAUDE.personal.md ~/.claude/agents/*.md ~/.ssh/config.d/dotfiles-personal.conf; do
     [ -L "$dst" ] || continue
     t=$(readlink "$dst")
     if [[ $t == "$personal/"* || $t == "$repo/personal/"* ]] || { [[ $t == "$repo/"* ]] && [ ! -e "$dst" ]; }; then
       rm "$dst"; echo "  ${Y}제거${R} ${dst/#$HOME/~} (personal)"
     fi
   done
+fi
+# ssh: 공유 호스트 목록은 ~/.ssh/config.d/*.conf 로 링크하고, ~/.ssh/config 맨 위에서 Include 한다.
+# Include 가 Host 블록보다 앞이어야 모든 호스트에 적용된다. 이 PC 만의 설정은 ~/.ssh/config 에 그대로 둔다.
+if compgen -G "$HOME/.ssh/config.d/*.conf" >/dev/null; then
+  chmod 700 ~/.ssh ~/.ssh/config.d 2>/dev/null || true
+  if ! grep -qxF 'Include config.d/*.conf' ~/.ssh/config 2>/dev/null; then
+    { echo 'Include config.d/*.conf'; echo; cat ~/.ssh/config 2>/dev/null || true; } > ~/.ssh/config.new
+    chmod 600 ~/.ssh/config.new && mv ~/.ssh/config.new ~/.ssh/config
+    echo "  ${G}→${R} ~/.ssh/config: Include config.d/*.conf"
+  fi
 fi
 if [ $profile = vanilla ] && [ -z "$(git config --global --includes user.email 2>/dev/null)" ]; then
   if [ -t 0 ]; then

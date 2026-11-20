@@ -71,6 +71,7 @@ git 도 같은 방식이다: `git/gitconfig` 가 자격 증명 도우미용 `~/.
 | `claude/hud/statusline.sh` | `~/.claude/hud/` + `settings.json` 의 `statusLine` | 전체 |
 | `claude/CLAUDE.md` | `~/.claude/CLAUDE.md` — **`--claude-md` 일 때만**. 끝에서 `~/.claude/CLAUDE.personal.md` 를 import | 전체 |
 | `claude/hooks/guard.py` | `~/.claude/hooks/` + `settings.json` 의 가드 `PreToolUse` 항목과 `permissions.deny` | 전체 |
+| `personal/ssh/config` | `~/.ssh/config.d/dotfiles-personal.conf` + `~/.ssh/config` 맨 위 `Include config.d/*.conf` — 모든 PC 가 같은 호스트 목록. 키는 동기화하지 않는다 | personal 만 |
 | `personal/claude/agents/*.md`, `personal/claude/CLAUDE.md` | `~/.claude/agents/`, `~/.claude/CLAUDE.personal.md` | personal 만 |
 | Orca 스킬 `orca-cli`, `orchestration`, `computer-use` | `orca skills install` 로 `~/.agents/skills/` + `~/.claude/skills/` — Orca CLI 가 있을 때(Linux 는 `orca-ide`) | 전체 |
 | `macos/karabiner.json` | `~/.config/karabiner/` | macOS |
