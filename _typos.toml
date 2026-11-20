@@ -1,0 +1,5 @@
+# 오탐만 허용한다 — vim 옵션(fo = formatoptions, :ba = :ball), p10k 포맷 문자열, 정규식 (ba)?sh.
+[default.extend-words]
+fo = "fo"
+ba = "ba"
+Pn = "Pn"
