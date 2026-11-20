@@ -23,10 +23,10 @@ vanilla 는 값이 필요한 기능(신원 허용 목록, 도메인 차단, 상�
 
 브라우저가 필요한 로그인(GitHub, SSH 키, Google Drive, Claude Code)은 스크립트로 못 한다. Ubuntu 에서는 [`setup/MANUAL.md`](setup/MANUAL.md) 에 정리돼 있고, 에이전트가 하나씩 안내할 수 있다.
 
-레포가 비공개라서, 아직 레포가 없는 PC 에서는 스크립트만 먼저 받는다:
+아직 레포가 없는 PC 에서는 스크립트만 먼저 받는다:
 
 ```bash
-gh api repos/<owner>/dotfiles/contents/setup/macos.sh -H 'Accept: application/vnd.github.raw' > setup.sh && bash setup.sh
+curl -fsSL https://raw.githubusercontent.com/<owner>/dotfiles/main/setup/macos.sh -o setup.sh && bash setup.sh
 ```
 
 ## 계층
@@ -60,6 +60,11 @@ git 도 같은 방식이다: `git/gitconfig` 가 자격 증명 도우미용 `~/.
 - `bin/pull-all` — `~/git` 아래 모든 레포를 fast-forward. `--ci-gate` 는 GitHub 체크가 초록인 커밋만 받고(빨강이거나 아직 도는 중이면 그대로 두고 ⏸ 로 보고), `--check` 는 뒤처진 레포만 보고한다.
 - `bin/cron-install` — `~/git/*/deploy/crontab.<호스트>`(와 `*/personal/deploy/`) 를 레포마다 울타리 친 블록으로 사용자 crontab 에 설치한다. 울타리 밖 줄은 건드리지 않는다. 파일이 없으면 옛 블록을 유지하고, 잘못된 줄이 있으면 설치를 멈추며, 이전 crontab 은 `~/.local/state/cron-install/` 에 백업한다.
 - 크론 작업은 `crontab -e` 가 아니라 레포의 `deploy/crontab.<호스트>` 를 고쳐 바꾼다.
+
+그 밖의 링크:
+
+| 레포 안 | 링크 위치 | OS |
+|---|---|---|
 | `vim/vimrc` | `~/.vimrc` — 첫 실행 때 Vundle 과 플러그인 설치 | 전체 |
 | `npm/npmrc` | `~/.npmrc` | 전체 |
 | `linux/systemd/rclone-gdrive.service` | `~/.config/systemd/user/` — `~/gdrive` 에 Google Drive, `gdrive` 리모트가 생기면 켜짐 | Linux |
