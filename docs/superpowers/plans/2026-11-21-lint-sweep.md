@@ -7,3 +7,10 @@
 3. `.cmd` 는 CRLF 로 체크아웃(`.gitattributes`) — cmd 는 LF 파일에서 `goto`/레이블을 잘못 찾을 수 있다.
 4. PowerShell 은 PSScriptAnalyzer, 워크플로는 actionlint, 오타는 typos — 각각 CI 에 추가하고 나온 것을 고친다.
 5. 테스트가 없는 명령(`gh-protect`, `pull-all` 의 personal 레포)에 테스트.
+
+## 결과 (2026-11-21)
+
+완료. CI 에 shellcheck(style), ruff, PSScriptAnalyzer, actionlint, typos, `.ps1` ASCII·`.cmd` CRLF 검사와
+`gh-protect`·`pull-all`·`check_no_personal` 테스트가 들어갔고 `main` 은 초록이다. 고치다 나온 실제 버그:
+`cron-install` 이 범위 밖 스케줄(61 분)을 통과시켰다 — 필드별 범위 검사로 막았다.
+personal 프로필은 이제 전역 CLAUDE.md 를 늘 링크한다.
