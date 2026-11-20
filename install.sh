@@ -7,7 +7,7 @@
 #                              없고 별도 비공개 레포다 — 없으면 origin 옆의 <이름>-personal 레포를 clone 한다
 #                              (DOTFILES_PERSONAL_REPO 로 바꿀 수 있음, 위치는 DOTFILES_PERSONAL).
 #                              고른 값은 ~/.config/dotfiles/profile 에 저장 — 다음부터는 생략 가능
-#   ./install.sh --claude-md   claude/CLAUDE.md 도 Claude Code 전역 지시문으로 링크
+#   ./install.sh --claude-md   claude/CLAUDE.md 도 Claude Code 전역 지시문으로 링크 (personal 은 늘 링크)
 #   ./install.sh --brew        macOS: macos/Brewfile 로 `brew bundle` 도 실행
 #
 # 이미 있는 실제 파일은 심볼릭 링크로 바꾸기 전에 <file>.bak 으로 옮긴다.
@@ -104,7 +104,8 @@ if d.get("statusLine") != want:
     print("  → ~/.claude/settings.json statusLine 설정")
 PY
 fi
-if [ $with_claude_md = 1 ]; then link claude/CLAUDE.md ~/.claude/CLAUDE.md; fi
+# personal 은 내 PC 라 전역 CLAUDE.md 도 늘 링크한다 — 옵션을 빠뜨린 PC 하나가 옛 규칙으로 돈 적이 있다
+if [ "$with_claude_md" = 1 ] || [ "$profile" = personal ]; then link claude/CLAUDE.md ~/.claude/CLAUDE.md; fi
 
 # Claude Code 가드 훅 + 에이전트 — 가드는 --dangerously-skip-permissions 에서도 비밀값 열람과
 # 되돌릴 수 없는 명령을 막는다. PreToolUse 항목과 permissions.deny 만 병합한다.
