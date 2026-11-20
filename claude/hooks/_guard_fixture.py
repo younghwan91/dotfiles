@@ -8,10 +8,15 @@ import os
 import shutil
 import subprocess
 import tempfile
+from pathlib import Path
 
 REAL_HOME = "/home/user"
 RUNTIME_REPOS = ("app-live", "app-db", "app-cron", "app-swing")
 DISABLED_REPOS = ("app-disabled",)  # crontab 에 주석 줄로만 나온다
+
+
+def run(*args, repo):
+    subprocess.run(["git", "-C", repo, *args], check=True, capture_output=True)
 
 
 def make():
@@ -21,15 +26,15 @@ def make():
     for r in RUNTIME_REPOS + DISABLED_REPOS:
         d = os.path.join(git, r)
         os.makedirs(d)
-        run = lambda *a: subprocess.run(["git", "-C", d, *a], check=True, capture_output=True)
-        run("init", "-q", "-b", "main")
-        open(os.path.join(d, "README.md"), "w").write("x\n")
+        run("init", "-q", "-b", "main", repo=d)
+        Path(d, "README.md").write_text("x\n")
         os.makedirs(os.path.join(d, "src"))
-        open(os.path.join(d, "src", "x.py"), "w").write("x\n")
-        run("add", ".")
+        Path(d, "src", "x.py").write_text("x\n")
+        run("add", ".", repo=d)
         # 임시 저장소라 전역 훅(커밋 신원 허용 목록)은 끈다. HEAD~1 이 있어야 하는 케이스가 있어 커밋은 둘.
         for m in ("init", "second"):
-            run("-c", "core.hooksPath=/dev/null", "-c", "user.name=t", "-c", "user.email=t@example.com", "commit", "-q", "--allow-empty", "-m", m)
+            run("-c", "core.hooksPath=/dev/null", "-c", "user.name=t", "-c", "user.email=t@example.com",
+                "commit", "-q", "--allow-empty", "-m", m, repo=d)
     cron = os.path.join(home, "crontab.txt")
     with open(cron, "w") as f:
         f.write(f"# [DISABLED] 30 18 * * 1-5 cd {git}/app-disabled && ./run.sh\n")
