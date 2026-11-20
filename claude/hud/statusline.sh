@@ -105,9 +105,9 @@ fmt_remaining() {
 
 pct_color() {
   local pct=$1
-  if [ "$pct" -lt 50 ]; then echo "\033[38;5;158m"       # 민트
-  elif [ "$pct" -lt 80 ]; then echo "\033[38;5;229m"      # 버터 노랑
-  else echo "\033[38;5;217m"; fi                          # 파스텔 분홍/빨강
+  if [ "$pct" -lt 50 ]; then printf '%s\n' '\033[38;5;158m'       # 민트
+  elif [ "$pct" -lt 80 ]; then printf '%s\n' '\033[38;5;229m'      # 버터 노랑
+  else printf '%s\n' '\033[38;5;217m'; fi                          # 파스텔 분홍/빨강
 }
 
 # 퍼센트를 3칸 고정 폭으로 오른쪽 정렬한다("5" -> "  5", "62" -> " 62").
@@ -241,6 +241,7 @@ WIN_STAT=""
 case "$(uname -s 2>/dev/null)" in MINGW*|MSYS*|CYGWIN*)
   WS="${TEMP:-/tmp}/hud-winstat"
   if [ ! -f "$WS" ] || [ -n "$(find "$WS" -mmin +0.17 2>/dev/null)" ]; then
+    # shellcheck disable=SC2016  # $c 등은 PowerShell 변수 — bash 가 풀면 안 된다
     ( powershell.exe -NoProfile -Command '$c=(Get-CimInstance Win32_Processor|Measure-Object LoadPercentage -Average).Average;$o=Get-CimInstance Win32_OperatingSystem;"{0} {1} {2}" -f [int]$c,[int]($o.TotalVisibleMemorySize/1024),[int](($o.TotalVisibleMemorySize-$o.FreePhysicalMemory)/1024)' > "$WS.tmp" 2>/dev/null && mv -f "$WS.tmp" "$WS" ) >/dev/null 2>&1 &
   fi
   [ -f "$WS" ] && WIN_STAT=$(tr -d '\r' < "$WS")
@@ -274,7 +275,7 @@ TEMP=""
 TZ_PATH=$(grep -l "x86_pkg_temp" /sys/class/thermal/thermal_zone*/type 2>/dev/null | head -1 | sed 's/type$/temp/')
 # Jetson: x86_pkg_temp 가 없고 CPU 센서 이름은 "cpu-thermal"
 [ -z "$TZ_PATH" ] && TZ_PATH=$(grep -lx "cpu-thermal" /sys/class/thermal/thermal_zone*/type 2>/dev/null | head -1 | sed 's/type$/temp/')
-[ -z "$TZ_PATH" ] && TZ_PATH=$(ls /sys/class/thermal/thermal_zone*/temp 2>/dev/null | head -1)
+if [ -z "$TZ_PATH" ]; then for t in /sys/class/thermal/thermal_zone*/temp; do [ -e "$t" ] && { TZ_PATH=$t; break; }; done; fi
 if [ -n "$TZ_PATH" ] && [ -r "$TZ_PATH" ]; then
   TEMP=$(awk '{printf "%d", $1/1000}' "$TZ_PATH")
 fi
