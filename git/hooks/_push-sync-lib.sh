@@ -88,13 +88,13 @@ push_sync_after() {
           'f=$(git config --get sync.pullFlags); NO_COLOR=1 "$HOME/git/dotfiles/bin/pull-all" $f; rc=$?;
            "$HOME/git/dotfiles/bin/cron-install" 2>&1 | sed "s/^/  /"; exit $rc' 2>&1)
         rc=$?
-        [ $try -gt 1 ] && echo "    (retry $try)"
+        [ "$try" -gt 1 ] && echo "    (retry $try)"
         printf '%s\n' "$out" | sed 's/^/    /'
         [ $rc -eq 0 ] && break
         printf '%s' "$out" | grep -q "held by CI\|no check runs yet\|running" || break
         sleep 60
       done
-      if [ $rc -ne 0 ]; then
+      if [ "$rc" -ne 0 ]; then
         printf '%s\n' "$out" | tail -n 15 \
           | push_sync_alert warn "push-sync: $p failed to pull $repo (rc=$rc) — one of ⏸ held / ✗ / unreachable"
       fi
