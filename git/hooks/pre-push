@@ -5,6 +5,7 @@ LOCAL="$(git rev-parse --path-format=absolute --git-common-dir)/hooks/pre-push"
 if [ -x "$LOCAL" ]; then
   "$LOCAL" "$@" || exit $?
 fi
+# shellcheck source=git/hooks/_identity-lib.sh
 . "$(dirname "$0")/_identity-lib.sh"
 check_ids=0; identity_check_on && check_ids=1
 block_re=$(blocked_domain_re)
@@ -14,18 +15,18 @@ shas=()
 synced=()   # 푸시한 브랜치의 "원격ref sha" 쌍 — 끝에서 다른 PC 동기화에 쓴다
 while read -r _lref lsha rref rsha; do
   [ "$lsha" = "$z" ] && continue                      # 삭제 푸시
-  if [ "$rsha" = "$z" ]; then range="$lsha --not --remotes"; else range="$rsha..$lsha"; fi
+  if [ "$rsha" = "$z" ]; then range=("$lsha" --not --remotes); else range=("$rsha..$lsha"); fi
   if [ $check_ids = 1 ]; then
     while IFS='|' read -r sha ae ce; do
       [ -z "$sha" ] && continue
       for e in "$ae" "$ce"; do
         is_allowed "$e" || die "Identity of commit $sha being pushed is not in the allowlist: $e"
       done
-    done < <(git log --format='%H|%ae|%ce' $range 2>/dev/null)
+    done < <(git log --format='%H|%ae|%ce' "${range[@]}" 2>/dev/null)
   fi
   # 커밋 메시지 본문에 막을 도메인이 적힌 경우도 막는다
   if [ -n "$block_re" ]; then
-    bad=$(git log --format='%H %B' $range 2>/dev/null | grep -iE "$block_re" | head -1 || true)
+    bad=$(git log --format='%H %B' "${range[@]}" 2>/dev/null | grep -iE "$block_re" | head -1 || true)
     [ -n "$bad" ] && die "A commit message being pushed contains a blocked domain: $bad"
   fi
 
@@ -45,6 +46,7 @@ fi
 
 # 검사를 다 통과했다 — 푸시가 원격에 반영되면 다른 PC 에서 pull-all (백그라운드)
 if [ "${#synced[@]}" -gt 0 ]; then
+  # shellcheck source=git/hooks/_push-sync-lib.sh
   . "$(dirname "$0")/_push-sync-lib.sh"
   push_sync_after "$1" "${synced[@]}"
 fi
