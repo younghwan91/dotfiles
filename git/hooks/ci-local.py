@@ -103,7 +103,7 @@ def translate(script: str) -> str | None:
 
 
 _LOCK: list = []  # 잡고 있는 ci-local 잠금 파일(GC 로 닫히지 않게)
-_WT: "list[tuple[Path, Path]]" = []   # (레포, 전용 워크트리) — 끝나면 지운다
+_WT: list[tuple[Path, Path]] = []   # (레포, 전용 워크트리) — 끝나면 지운다
 
 
 def cleanup() -> None:
