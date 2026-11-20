@@ -60,6 +60,7 @@ git 도 같은 방식이다: `git/gitconfig` 가 자격 증명 도우미용 `~/.
 - `bin/pull-all` — `~/git` 아래 모든 레포를 fast-forward. `--ci-gate` 는 GitHub 체크가 초록인 커밋만 받고(빨강이거나 아직 도는 중이면 그대로 두고 ⏸ 로 보고), `--check` 는 뒤처진 레포만 보고한다.
 - `bin/cron-install` — `~/git/*/deploy/crontab.<호스트>`(와 `*/personal/deploy/`) 를 레포마다 울타리 친 블록으로 사용자 crontab 에 설치한다. 울타리 밖 줄은 건드리지 않는다. 파일이 없으면 옛 블록을 유지하고, 잘못된 줄이 있으면 설치를 멈추며, 이전 crontab 은 `~/.local/state/cron-install/` 에 백업한다.
 - `bin/ssh-keys-sync` — 모든 PC 의 `~/.ssh/authorized_keys` 를 GitHub 계정의 공개키 + `personal/ssh/authorized_keys` 로 맞춘다(Windows 는 `install.ps1`). 새 PC 는 GitHub 에 키를 올리면 다음 동기화 때 모든 PC 에 들어갈 수 있다. GitHub 에서 못 받거나 0개면 건드리지 않는다. `--check` 는 보고만.
+- `bin/repos-doctor` — 조용히 고장 난 git·훅·환경 설정(옛 경로를 가리키는 `core.hooksPath`, 깨진 `.venv` shebang, 끊긴 전역 링크 등)을 찾아 보고만 한다. 문제가 있으면 종료 코드 1.
 - `bin/gh-protect` — 내 공개 레포마다 "main via PR" ruleset(기본 브랜치는 PR 로만, 승인 0개, force push·삭제 금지)을 건다. `--check` 는 빠진 레포만 보고한다. 새 공개 레포를 놓치지 않게 크론으로 매일 돌린다.
 - 크론 작업은 `crontab -e` 가 아니라 레포의 `deploy/crontab.<호스트>` 를 고쳐 바꾼다.
 
@@ -149,7 +150,7 @@ pwsh -File C:\dev\git\dotfiles\windows\install.ps1
 | `update --check` | winget 이 업그레이드할 목록만 보기 |
 | `update install foo` | 그 밖의 인자는 그대로 winget 으로 |
 | `cla` | `claude --dangerously-skip-permissions` |
-| `doctor` | 되풀이되는 문제를 읽기 전용으로 점검: WSLService 꺼짐(AhnLab), 카카오톡·Google Drive 시작 프로그램 꺼짐(CCleaner); 고치는 법을 출력 |
+| `doctor` | 되풀이되는 문제를 읽기 전용으로 점검: WSLService 가 꺼졌는지, 자주 쓰는 앱이 시작 프로그램에서 빠졌는지; 고치는 법을 출력 |
 
 새 PC: `pwsh -File windows\setup.ps1` 이 `windows/winget-packages.json`(Windows 판 Brewfile)으로 `winget import` 를 한 뒤 `install.ps1` 을 돌린다. 목록은 `winget export -o windows\winget-packages.json` 으로 새로 받고, 런타임·프레임워크는 지운다(의존성으로 따라 들어온다).
 
