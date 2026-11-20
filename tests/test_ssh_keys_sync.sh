@@ -14,9 +14,9 @@ run() { SSH_KEYS_URL="$1" "$REPO/bin/ssh-keys-sync" "${@:2}" >/dev/null 2>&1; }
 
 run "file://$T/gh.keys" --check && no "check should report a difference"
 run "file://$T/gh.keys" || no "sync failed"
-grep -q AAAAgh2 "$T/ak" && grep -q AAAAextra1 "$T/ak" || no "missing keys after sync"
+if ! { grep -q AAAAgh2 "$T/ak" && grep -q AAAAextra1 "$T/ak"; }; then no "missing keys after sync"; fi
 grep -q AAAAstale "$T/ak" && no "stale key kept"
-[ -f "$T/ak.bak-dotfiles" ] && grep -q AAAAstale "$T/ak.bak-dotfiles" || no "no backup"
+if ! { [ -f "$T/ak.bak-dotfiles" ] && grep -q AAAAstale "$T/ak.bak-dotfiles"; }; then no "no backup"; fi
 before=$(cat "$T/ak"); run "file://$T/gh.keys"; [ "$before" = "$(cat "$T/ak")" ] || no "not idempotent"
 run "file://$T/gh.keys" --check || no "check should pass after sync"
 
