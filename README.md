@@ -59,6 +59,7 @@ git 도 같은 방식이다: `git/gitconfig` 가 자격 증명 도우미용 `~/.
 
 - `bin/pull-all` — `~/git` 아래 모든 레포를 fast-forward. `--ci-gate` 는 GitHub 체크가 초록인 커밋만 받고(빨강이거나 아직 도는 중이면 그대로 두고 ⏸ 로 보고), `--check` 는 뒤처진 레포만 보고한다.
 - `bin/cron-install` — `~/git/*/deploy/crontab.<호스트>`(와 `*/personal/deploy/`) 를 레포마다 울타리 친 블록으로 사용자 crontab 에 설치한다. 울타리 밖 줄은 건드리지 않는다. 파일이 없으면 옛 블록을 유지하고, 잘못된 줄이 있으면 설치를 멈추며, 이전 crontab 은 `~/.local/state/cron-install/` 에 백업한다.
+- `bin/gh-protect` — 내 공개 레포마다 "main via PR" ruleset(기본 브랜치는 PR 로만, 승인 0개, force push·삭제 금지)을 건다. `--check` 는 빠진 레포만 보고한다. 새 공개 레포를 놓치지 않게 크론으로 매일 돌린다.
 - 크론 작업은 `crontab -e` 가 아니라 레포의 `deploy/crontab.<호스트>` 를 고쳐 바꾼다.
 
 그 밖의 링크:
