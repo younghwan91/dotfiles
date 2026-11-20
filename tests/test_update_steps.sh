@@ -15,13 +15,14 @@ total=$(grep -o '\[1/[0-9]*\]' <<<"$out" | head -1 | tr -dc 0-9 | cut -c2-)
 for n in $(seq 1 "${total:-3}"); do
   grep -q "\[$n/$total\]" <<<"$out" || no "linux update: no [$n/$total] header"
 done
-grep -q "update done" <<<"$out" && [ $rc -eq 0 ] || no "linux update: success path (rc=$rc)"
+grep -q "update done" <<<"$out" && [ "$rc" -eq 0 ] || no "linux update: success path (rc=$rc)"
 grep -q "firmware check" <<<"$out" || [ -n "${WSL_DISTRO_NAME:-}" ] || ! command -v fwupdmgr >/dev/null \
   || no "linux update: fwupdmgr exit 2 (no updates) should not count as failure"
 
+# shellcheck disable=SC2016  # 작은따옴표 그대로 — sudo 스텁 본문이라 zsh 안에서 풀린다
 out=$(run '[[ $2 == autoremove ]] && return 1; return 0;') && rc=0 || rc=$?
 grep -q "\[$total/$total\]" <<<"$out" || no "linux update: stopped after a failed step"
-grep -q "apt autoremove" <<<"$(grep -A0 '실패한 단계' <<<"$out")" && [ $rc -ne 0 ] \
+grep -q "apt autoremove" <<<"$(grep -A0 '실패한 단계' <<<"$out")" && [ "$rc" -ne 0 ] \
   || no "linux update: failed step not reported (rc=$rc)"
 
 # Windows: update.cmd can't run here, so check every step has its header.
