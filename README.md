@@ -142,7 +142,7 @@ pwsh -File C:\dev\git\dotfiles\windows\install.ps1
 
 | 명령 | 하는 일 |
 |---|---|
-| `update` | 단계마다 `==> [n/5]` 를 찍으며: `uv tool upgrade --all`, 전역 `npm update -g`, 그다음 UAC 확인 한 번 뒤 관리자 창에서 winget upgrade --all(+ 아직 오래된 것 목록), Windows Update 소프트웨어 업데이트(드라이버·펌웨어는 목록만; 자동 재부팅 없음), `wsl --update`. Linux·WSL 은 아래 [`update`](#update) |
+| `update` | 단계마다 `==> [n/5]` 를 찍으며: `uv tool upgrade --all`, 전역 `npm update -g`, 그다음 UAC 확인 한 번 뒤 관리자 창에서 winget upgrade --all(+ 아직 오래된 것 목록), Windows Update 소프트웨어 업데이트(드라이버·펌웨어는 목록만; 자동 재부팅 없음), `wsl --update`. Linux·WSL 은 위의 [`update`](#update) |
 | `update --check` | winget 이 업그레이드할 목록만 보기 |
 | `update install foo` | 그 밖의 인자는 그대로 winget 으로 |
 | `cla` | `claude --dangerously-skip-permissions` |
