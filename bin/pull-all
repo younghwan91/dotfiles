@@ -125,13 +125,15 @@ echo "${B}${CYN}▸ ${host}${R}  ${D}$(date '+%F %T') · ${roots[*]} · 레포 $
 export PULL_ALL_FETCH_FAILED; PULL_ALL_FETCH_FAILED=$(mktemp); trap 'rm -f "$PULL_ALL_FETCH_FAILED"' EXIT
 fetch_one() { git -C "$1" fetch -q --prune 2>/dev/null || echo "$1" >> "$PULL_ALL_FETCH_FAILED"; }
 export -f fetch_one
+# shellcheck disable=SC2016  # $1 은 xargs 가 띄우는 bash 안에서 풀린다
 for d in "${repos[@]}"; do git -C "$d" rev-parse --path-format=absolute --git-common-dir 2>/dev/null; done \
   | sort -u | tr '\n' '\0' | xargs -0 -P "$jobs" -I{} bash -c 'fetch_one "$1"' _ {}
 
+# shellcheck disable=SC2016  # 위와 같다
 results=$(printf '%s\0' "${repos[@]}" | xargs -0 -P "$jobs" -I{} bash -c 'check "$1"' _ {} | sort -t$'\t' -k2,2)
 
 w=0
-while IFS=$'\t' read -r _ n _; do [ ${#n} -gt $w ] && w=${#n}; done <<< "$results"
+while IFS=$'\t' read -r _ n _; do [ ${#n} -gt "$w" ] && w=${#n}; done <<< "$results"
 
 n_ok=0 n_upd=0 n_skip=0 n_fail=0 n_hold=0
 while IFS=$'\t' read -r st name detail; do
