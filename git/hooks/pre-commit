@@ -18,6 +18,7 @@ if [ -f "$(git rev-parse --show-toplevel)/.pre-commit-config.yaml" ]; then
 elif [ -x "$LOCAL" ]; then
   "$LOCAL" "$@" || exit $?
 fi
+# shellcheck source=git/hooks/_identity-lib.sh
 . "$(dirname "$0")/_identity-lib.sh"
 
 ae=$(git var GIT_AUTHOR_IDENT    | sed -n 's/.*<\(.*\)>.*/\1/p')
