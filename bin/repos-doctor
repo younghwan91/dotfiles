@@ -52,6 +52,16 @@ profile=$(cat "$HOME/.config/dotfiles/profile" 2>/dev/null || echo "")
 personal=${DOTFILES_PERSONAL:-$dotfiles/personal}
 case "$profile" in
   personal)
+    # personal/ 은 별도 비공개 레포다 — 없거나 원격보다 뒤처지면 링크가 옛 값을 가리킨다
+    if [ ! -e "$personal/.git" ]; then
+      say_bad "personal 레포가 없다 (${personal/#$HOME/~}) — install.sh --profile personal 이 clone 한다"
+    else
+      behind=$(git -C "$personal" rev-list --count 'HEAD..@{upstream}' 2>/dev/null || echo "")
+      dirty=$(git -C "$personal" status --porcelain 2>/dev/null | head -1)
+      if [ -n "$behind" ] && [ "$behind" -gt 0 ]; then say_warn "personal 레포가 원격보다 ${behind}커밋 뒤 — pull-all"
+      elif [ -n "$dirty" ]; then say_warn "personal 레포에 커밋 안 한 변경이 있다"
+      else say_ok "personal 레포 최신"; fi
+    fi
     check_link "$HOME/.config/git/profile.gitconfig" "$personal/git/gitconfig"
     check_link "$HOME/.config/git/allowed-emails"    "$personal/git/allowed-emails"
     check_link "$HOME/.config/git/blocked-domains"   "$personal/git/blocked-domains" ;;
