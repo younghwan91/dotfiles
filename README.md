@@ -119,6 +119,19 @@ fast-forward 만 한다. 판단이 필요한 것은 보고만 하고 건드리�
 
 SSH 호스트 키·자격 증명 프롬프트를 꺼 두어 멈춰 서지 않는다. 출력이 터미널이 아니거나 `NO_COLOR` 가 있으면 색을 끈다. 실패한 레포가 하나라도 있으면 0 이 아닌 코드로 끝난다.
 
+## `update`
+
+생각날 때 한 번 돌리면 그 PC 를 최신으로 맞춘다. 단계마다 `==> [n/N]` 을 찍고, 한 단계가 실패해도 나머지는
+돌린 뒤 실패한 단계를 모아 보여 준다.
+
+| | Linux · WSL (`zsh/os/linux.zsh`) | Windows (`windows/bin/update.cmd`) |
+|---|---|---|
+| 패키지 | apt update → full-upgrade → autoremove, snap | winget (UAC 한 번) |
+| 도구 | uv tools, 전역 npm | uv tools, 전역 npm |
+| OS | 펌웨어 목록만(설치는 `fwupdmgr update`), 재부팅 필요 알림 | Windows Update(드라이버·펌웨어는 목록만), `wsl --update` |
+
+`update install foo` 처럼 인자를 주면 apt(Windows 는 winget)로 그대로 넘긴다.
+
 ## Windows (PowerShell)
 
 `windows/bin/*` 은 zsh 별칭의 Windows 쪽이다. `install.ps1` 이 `~\.local\bin` 에 복사한다:
@@ -129,7 +142,7 @@ pwsh -File C:\dev\git\dotfiles\windows\install.ps1
 
 | 명령 | 하는 일 |
 |---|---|
-| `update` | 단계마다 `==> [n/5]` 를 찍으며: `uv tool upgrade --all`, 전역 `npm update -g`, 그다음 UAC 확인 한 번 뒤 관리자 창에서 winget upgrade --all(+ 아직 오래된 것 목록), Windows Update 소프트웨어 업데이트(드라이버·펌웨어는 목록만; 자동 재부팅 없음), `wsl --update`. Linux·WSL 의 `update` 는 apt + snap + uv + npm + 펌웨어 목록 + 재부팅 필요 알림 |
+| `update` | 단계마다 `==> [n/5]` 를 찍으며: `uv tool upgrade --all`, 전역 `npm update -g`, 그다음 UAC 확인 한 번 뒤 관리자 창에서 winget upgrade --all(+ 아직 오래된 것 목록), Windows Update 소프트웨어 업데이트(드라이버·펌웨어는 목록만; 자동 재부팅 없음), `wsl --update`. Linux·WSL 은 아래 [`update`](#update) |
 | `update --check` | winget 이 업그레이드할 목록만 보기 |
 | `update install foo` | 그 밖의 인자는 그대로 winget 으로 |
 | `cla` | `claude --dangerously-skip-permissions` |
