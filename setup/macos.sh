@@ -9,7 +9,7 @@ set -e
 echo "===================================================="
 echo "   macOS 환경 설정"
 echo "===================================================="
-read -p "설정을 시작할까요? (y/n): " confirm
+read -r -p "설정을 시작할까요? (y/n): " confirm
 [[ $confirm == [yY] || $confirm == [yY][eE][sS] ]] || { echo "설정을 취소했습니다."; exit 0; }
 
 # 1. Xcode Command Line Tools (git, make, clang)
