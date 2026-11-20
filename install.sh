@@ -69,7 +69,15 @@ link() {  # link <레포 기준 원본 | 절대 경로> <대상>
 }
 
 # ---- 모든 OS ----
-for f in "$repo"/bin/*; do link "bin/$(basename "$f")" "${BIN_DIR:-$HOME/.local/bin}/$(basename "$f")"; done
+bin_dir=${BIN_DIR:-$HOME/.local/bin}
+for f in "$repo"/bin/*; do
+  # 실행 파일만 — bin/__pycache__ 같은 부산물이 PATH 에 링크된 적이 있다
+  [ -f "$f" ] && [ -x "$f" ] && link "bin/$(basename "$f")" "$bin_dir/$(basename "$f")"
+done
+for l in "$bin_dir"/*; do  # 그런 부산물을 가리키던 옛 링크를 걷는다
+  [ -L "$l" ] || continue; t=$(readlink "$l")
+  [[ $t == "$repo/bin/"* ]] && { [ ! -f "$t" ] || [ ! -x "$t" ]; } && { rm "$l"; echo "  ${Y}제거${R} ${l/#$HOME/~}"; }
+done
 link zsh/zshrc  ~/.zshrc
 link zsh/zshenv ~/.zshenv
 if [ $os = darwin ] && [ -e "$repo/zsh/p10k.darwin.zsh" ]; then link zsh/p10k.darwin.zsh ~/.p10k.zsh
