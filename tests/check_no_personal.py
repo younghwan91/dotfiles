@@ -32,7 +32,8 @@ def ip_hits(text):
 files = subprocess.run(["git", "ls-files", "-z"], cwd=root, capture_output=True, text=True, check=True).stdout.split("\0")
 bad = 0
 for f in files:
-    if not f or f.startswith("personal/"):
+    # LICENSE 의 저작권자 이름은 일부러 공개하는 정보다
+    if not f or f.startswith("personal/") or f in ("LICENSE",):
         continue
     p = root / f
     if not p.is_file():
