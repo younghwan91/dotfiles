@@ -129,8 +129,7 @@ def split_commands(cmd):
     """따옴표 밖 ; & && || 줄바꿈 으로 파이프라인을, | 로 단순명령을 나눈다.
     돌려주는 값: [[단순명령 원문, ...] 파이프라인, ...]. $( ) <( ) 안은 별도 명령으로 펼친다."""
     b = blank_quotes(cmd)
-    pipelines, cur_pipe, start, depth = [], [], 0, 0
-    subs = []
+    pipelines, cur_pipe, start = [], [], 0
     i, n = 0, len(b)
     stack = []
     while i < n:
@@ -142,9 +141,7 @@ def split_commands(cmd):
         if c == "(" and stack:
             stack.append(-1)
         if c == ")" and stack:
-            s0 = stack.pop()
-            if s0 >= 0 and not stack:
-                subs.append((s0, i))
+            stack.pop()
             i += 1
             continue
         if not stack:
@@ -161,7 +158,7 @@ def split_commands(cmd):
     out = [p for p in out if p]
     # 치환 안의 명령: (앞 맥락, 안쪽 문자열). 큰따옴표 안 $( ) 와 `...` 도 산다(작은따옴표 안만 죽는다).
     inner = []
-    for s0, e, body in find_substs(cmd):
+    for s0, _end, body in find_substs(cmd):
         inner.append((blank_quotes(cmd[:s0]).rstrip().rstrip('"'), body))
     return out, inner
 
