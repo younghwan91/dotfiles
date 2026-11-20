@@ -204,6 +204,7 @@ if [ ! -d "$HOME/git/dotfiles" ]; then
 fi
 "$HOME/git/dotfiles/install.sh" ${DOTFILES_PROFILE:+--profile "$DOTFILES_PROFILE"} --claude-md
 graphify install --platform claude
+sudo bash "$HOME/git/dotfiles/setup/avahi-restart.sh"   # <호스트>.local 이 OOM 뒤에도 살아 있게
 # sudo: 그냥 chsh 는 비밀번호를 묻고 터미널이 없으면 실패한다.
 sudo chsh -s "$(command -v zsh)" "$USER" || true
 
