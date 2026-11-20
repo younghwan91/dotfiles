@@ -6,7 +6,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 G = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "guard.py")
 sys.path.insert(0, HERE)
-import _guard_fixture as fx
+import _guard_fixture as fx  # noqa: E402, I001 — needs HERE on sys.path first
 # 가짜 HOME + crontab: guard 가 import 될 때 HOME 을 읽으므로 그 전에 바꾼다
 FAKE, _env = fx.make()
 os.environ.update(HOME=FAKE, GUARD_TEST_CRONTAB=_env["GUARD_TEST_CRONTAB"])
