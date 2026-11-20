@@ -79,6 +79,7 @@ def split_blocks(text: str) -> tuple[list[str], dict[str, list[str]]]:
 
 MONTHS = "jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec"
 DAYS = "sun|mon|tue|wed|thu|fri|sat"
+RANGES = {0: (0, 59), 1: (0, 23), 2: (1, 31), 3: (1, 12), 4: (0, 7)}  # 분 시 일 월 요일(0·7 = 일)
 
 
 def field_ok(field: str, i: int) -> bool:
@@ -86,7 +87,19 @@ def field_ok(field: str, i: int) -> bool:
     names = {3: MONTHS, 4: DAYS}.get(i)
     atom = rf"(\*|\d+|{names})" if names else r"(\*|\d+)"
     item = rf"{atom}(-{atom})?(/\d+)?"
-    return re.fullmatch(rf"{item}(,{item})*", field, flags=re.IGNORECASE) is not None
+    if re.fullmatch(rf"{item}(,{item})*", field, flags=re.IGNORECASE) is None:
+        return False
+    # 숫자는 그 필드의 범위 안이어야 한다 — 61 분 같은 것을 구문만 보고 통과시켰다(crontab 이 마지막에
+    # 거부하지만 어느 레포 몇째 줄인지는 말해 주지 않는다). /단계 값은 1 이상이면 된다.
+    lo, hi = RANGES[i]
+    for part in field.split(","):
+        base, _, step = part.partition("/")
+        if step and int(step) < 1:
+            return False
+        for num in re.findall(r"\d+", base):
+            if not lo <= int(num) <= hi:
+                return False
+    return True
 
 
 def validate(repo: str, lines: list[str]) -> list[str]:

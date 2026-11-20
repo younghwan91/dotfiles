@@ -29,3 +29,14 @@ if cmp -s "$T/run2" "$T/run3" && ! grep -Pzq '\n\n\n' "$T/run3" && grep -q 'unma
 else
   echo "FAIL cron_install_idempotent"; diff "$T/run2" "$T/run3" | head; cat -A "$T/run3" | head -20; exit 1
 fi
+
+# 잘못된 스케줄이 하나라도 있으면 아무것도 설치하지 않고 1 로 끝난다 — 지금 crontab 은 그대로
+before=$(cat "$FAKE_CRONTAB")
+mkdir -p "$T/git/broken/deploy"; echo '61 7 * * * echo bad-minute' > "$T/git/broken/deploy/crontab.h1"
+if PATH="$T/bin:$PATH" python3 "$REPO/bin/cron-install" > "$T/out.txt" 2>&1; then
+  echo "FAIL cron_install_accepted_bad_line"; exit 1
+elif [ "$before" != "$(cat "$FAKE_CRONTAB")" ] || ! grep -q "broken" "$T/out.txt"; then
+  echo "FAIL cron_install_changed_crontab_or_silent"; sed 's/^/    /' "$T/out.txt"; exit 1
+else
+  echo "test_cron_install: rejects bad line pass"
+fi
