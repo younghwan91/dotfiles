@@ -22,7 +22,7 @@ push() { git -C "$HOME/r" push -q origin main 2>&1; }
 check() {  # check <name> <expect ok|fail> <rc> <output> [<must contain>]
   local got=ok; [ "$3" -ne 0 ] && got=fail
   if [ "$got" = "$2" ] && { [ -z "${5:-}" ] || grep -q "$5" <<<"$4"; }; then pass=$((pass + 1))
-  else fail=$((fail + 1)); echo "FAIL $1: expected $2, got $got"; sed 's/^/    /' <<<"$4" | head -8; fi
+  else fail=$((fail + 1)); echo "FAIL $1: expected $2, got $got"; head -8 <<<"$4" | while IFS= read -r l; do printf '    %s\n' "$l"; done; fi
 }
 
 t_vanilla_no_files() { setup
