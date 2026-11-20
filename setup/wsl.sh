@@ -8,7 +8,7 @@ echo "   WSL Ubuntu AI/로보틱스 환경 설정"
 echo "===================================================="
 
 # 1. 시작 확인
-read -p "설정을 시작할까요? (y/n): " confirm
+read -r -p "설정을 시작할까요? (y/n): " confirm
 if [[ $confirm != [yY] && $confirm != [yY][eE][sS] ]]; then
     echo "사용자가 설정을 취소했습니다."
     exit 0
