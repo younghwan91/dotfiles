@@ -180,6 +180,17 @@ PowerShell 프로필이 아니라 `.cmd` 심인 건 일부러다: cmd, Windows P
 
 명령은 따옴표·`$( )`·heredoc 을 고려해 파싱한다: heredoc 으로 파일에 쓰는 글과 python heredoc 본문은 셸로 검사하지 않는다. 훅 항목은 실패 시 통과한다(파일 없음 → 허용). 테스트: `python3 claude/hooks/test_guard.py` 와 `claude/hooks/test_guard_extra.py`. 과거 도구 호출 약 1만 5천 건에 대해서도 다시 돌려 봤다. `install.sh` 는 홈 디렉터리 비밀 파일용 `permissions.deny` 도 합친다.
 
+## 검사
+
+`.github/workflows/ci.yml` 의 스텝은 GitHub Actions 와 `pre-push` 훅(`ci-local.py`) 둘 다 돌린다. `main` 은 PR 로만 받는다.
+
+| 종류 | 스크립트 |
+|---|---|
+| 정적 검사 | `tests/test_shellcheck.sh`(style, `-x`), `tests/test_ruff.sh`, `tests/test_psscriptanalyzer.sh`, `tests/test_actionlint.sh`, `tests/test_typos.sh` |
+| 공개 레포 | `tests/check_no_personal.py`(commit 때도 돈다)와 그 자체 테스트 `tests/test_check_no_personal.sh` |
+| Windows 파일 | `tests/test_powershell.sh`(파싱), `tests/test_ps1_ascii.sh`, `tests/test_eol.sh`(`.cmd` 는 CRLF) |
+| 동작 | `install`, `cron-install`, `pull-all`, `repos-doctor`, `ssh-keys-sync`, `gh-protect`, `update`, 신원 훅, Claude 가드 — `tests/test_*.sh`, `claude/hooks/test_guard*.py` |
+
 ## 라이선스
 
 MIT — [LICENSE](LICENSE) 참고.
