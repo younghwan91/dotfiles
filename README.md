@@ -175,3 +175,7 @@ PowerShell 프로필이 아니라 `.cmd` 심인 건 일부러다: cmd, Windows P
 - **운영 체크아웃**: crontab 이 돌리는 `~/git/<레포>` 에서 `main` 이외 브랜치로 바꾸거나 만드는 것(대신 워크트리에서 작업).
 
 명령은 따옴표·`$( )`·heredoc 을 고려해 파싱한다: heredoc 으로 파일에 쓰는 글과 python heredoc 본문은 셸로 검사하지 않는다. 훅 항목은 실패 시 통과한다(파일 없음 → 허용). 테스트: `python3 claude/hooks/test_guard.py` 와 `claude/hooks/test_guard_extra.py`. 과거 도구 호출 약 1만 5천 건에 대해서도 다시 돌려 봤다. `install.sh` 는 홈 디렉터리 비밀 파일용 `permissions.deny` 도 합친다.
+
+## 라이선스
+
+MIT — [LICENSE](LICENSE) 참고.
