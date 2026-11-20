@@ -46,5 +46,7 @@ jobs:
         run: bash tests/test_typos.sh
       - name: gh-protect
         run: bash tests/test_gh_protect.sh
+      - name: pull-all
+        run: bash tests/test_pull_all.sh
       - name: update prints its steps
         run: (command -v zsh || sudo apt-get install -y zsh) && bash tests/test_update_steps.sh
