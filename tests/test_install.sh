@@ -66,6 +66,12 @@ if points "$HOME/.ssh/config.d/dotfiles-personal.conf" "$P/ssh/config" \
    && [ "$first" = "$(cat "$HOME/.ssh/config")" ] && [ -f "$HOME/.ssh/config.bak-dotfiles" ]; then ok
 else cp "$HOME/.ssh/config" "$HOME/out.txt"; no ssh_include_last; fi
 
+# personal 은 --claude-md 없이도 전역 CLAUDE.md 를 링크하고, vanilla 는 옵션이 있어야 한다
+fresh; inst --profile personal
+if points "$HOME/.claude/CLAUDE.md" "$REPO/claude/CLAUDE.md"; then ok; else no personal_links_claude_md; fi
+fresh; inst --profile vanilla
+if [ ! -e "$HOME/.claude/CLAUDE.md" ]; then ok; else no vanilla_claude_md_opt_in; fi
+
 # bin/ 의 실행 파일만 링크하고, 부산물(__pycache__)을 가리키던 옛 링크는 걷는다
 fresh; mkdir -p "$BIN_DIR"; ln -s "$REPO/bin/__pycache__" "$BIN_DIR/__pycache__"
 if inst --profile vanilla && [ -L "$BIN_DIR/pull-all" ] && [ ! -e "$BIN_DIR/__pycache__" ] && [ ! -L "$BIN_DIR/__pycache__" ]; then ok; else no bin_links_executables_only; fi
