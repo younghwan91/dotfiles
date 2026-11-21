@@ -46,6 +46,8 @@ jobs:
         run: bash tests/test_typos.sh
       - name: gh-protect
         run: bash tests/test_gh_protect.sh
+      - name: ci-local light mode
+        run: bash tests/test_ci_local_light.sh
       - name: pull-all
         run: bash tests/test_pull_all.sh
       - name: check_no_personal self-test
