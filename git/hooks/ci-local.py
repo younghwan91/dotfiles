@@ -23,6 +23,10 @@ ci.yml 과 어긋난다. 원본을 읽으면 CI 를 고치는 순간 로컬도 �
 - `uv build`, 해석할 수 없는 `${{ }}` 식이 남은 스텝
 - 매트릭스는 파이썬 한 버전만 (3.12 가 있으면 3.12, 없으면 가장 높은 버전)
 
+공개 레포는 가볍게 돈다: GitHub Actions 가 무료로 전체 CI 를 돌리고 ruleset 이 초록일 때만 머지하게 하므로,
+로컬에서는 린트·문법 같은 빠른 스텝만 돌리고 무거운 스텝(pytest·변이 검사)은 건너뛴다(`is_heavy`).
+50분짜리 pre-push 는 결국 --no-verify 로 우회된다(sector-flow, 2026-11-21). 공개 레포에서도 전체를 원하면 CI_LOCAL_FULL=1.
+
 사용: ci-local.py [<commit>]   (기본 HEAD)
 우회: SKIP_CI_LOCAL=1 git push   또는   git push --no-verify
 """
@@ -115,6 +119,25 @@ def cleanup() -> None:
         subprocess.run(["git", "worktree", "prune"], cwd=top, capture_output=True)
 
 
+#: 공개 레포에서 로컬로 돌리지 않는 무거운 스텝 — GitHub CI 가 돈다.
+HEAVY = re.compile(r"\b(pytest|verify_merge|mutation_sample|mutmut)\b")
+
+
+def is_heavy(script: str) -> bool:
+    """테스트 실행·변이 검사처럼 오래 걸리는 스텝인가(설치·린트·문법 검사는 아니다)."""
+    return bool(HEAVY.search(script))
+
+
+def is_public(top: Path) -> bool:
+    """레포가 GitHub 공개 레포인가. gh 가 없거나 실패하면 False(전체를 돈다 — 안전한 쪽)."""
+    try:
+        out = subprocess.run(["gh", "repo", "view", "--json", "visibility", "-q", ".visibility"],
+                             cwd=top, capture_output=True, text=True, timeout=15)
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+    return out.returncode == 0 and out.stdout.strip() == "PUBLIC"
+
+
 def main() -> int:
     if os.environ.get("SKIP_CI_LOCAL"):
         say(f"{D}ci-local: skipped via SKIP_CI_LOCAL{R}")
@@ -122,6 +145,9 @@ def main() -> int:
 
     sha = sys.argv[1] if len(sys.argv) > 1 else "HEAD"
     top = Path(git("rev-parse", "--show-toplevel"))
+    light = not os.environ.get("CI_LOCAL_FULL") and is_public(top)
+    if light:
+        say(f"{D}ci-local: 공개 레포 — 빠른 스텝만 돈다(pytest·변이 검사는 GitHub CI). 전체는 CI_LOCAL_FULL=1{R}")
     common = Path(git("rev-parse", "--path-format=absolute", "--git-common-dir"))
     # 훅은 GIT_DIR 등을 물려받는다. 링크된 워크트리에서 푸시하면 그게 그 워크트리의 gitdir 이라,
     # 아래 `git checkout --detach ... cwd=wt` 가 cwd(전용 워크트리)가 아니라 **푸시한 워크트리의
@@ -240,6 +266,10 @@ def main() -> int:
                 script = translate(sub)
                 if script is None:
                     continue
+
+            if light and is_heavy(script):
+                skipped.append(f"{label} › {name} (공개 레포 — GitHub CI 가 돈다)")
+                continue
 
             is_install = bool(re.search(r"\b(uv sync|uv pip install)\b", script))
             if is_install and script in ran:
