@@ -1,22 +1,50 @@
-# Starship prompt, Shades of Purple palette. Installed to ~\.config\starship.toml by windows\install.ps1.
-add_newline = false
-format = "$directory$git_branch$git_status$python$nodejs$cmd_duration$line_break$character"
+# Starship prompt in the Shades of Purple palette, pill style like the p10k rainbow prompt on Linux.
+# Installed to ~\.config\starship.toml by windows\install.ps1. Needs a Nerd Font (JetBrainsMono NFM).
+# Glyphs are \u escapes:  /  = pill caps, the rest are Nerd Font icons.
+add_newline = true
+format = "$os$directory$git_branch$git_status$python$nodejs$rust$line_break$character"
+right_format = "$cmd_duration$time"
+
+[os]
+disabled = false
+format = "[](fg:#6943ff)[ $symbol ](bg:#6943ff fg:#ffffff)[](fg:#6943ff) "
+[os.symbols]
+Windows = ""
+Ubuntu = ""
+Linux = ""
+Macos = ""
 
 [directory]
-style = "bold #fb94ff"
 truncation_length = 3
+truncation_symbol = "…/"
+format = "[](fg:#9d5cff)[ $path ](bg:#9d5cff fg:#ffffff bold)[](fg:#9d5cff) "
 
 [git_branch]
-style = "bold #fad000"
-symbol = " "
+symbol = ""
+format = "[](fg:#fb94ff)[ $symbol $branch ](bg:#fb94ff fg:#2d2b55)[](fg:#fb94ff) "
 
 [git_status]
-style = "#ec3a37"
+format = "([](fg:#fad000)[ $all_status$ahead_behind ](bg:#fad000 fg:#2d2b55)[](fg:#fad000) )"
+
+[python]
+symbol = ""
+format = "[](fg:#80fcff)[ $symbol $version ](bg:#80fcff fg:#2d2b55)[](fg:#80fcff) "
+[nodejs]
+symbol = ""
+format = "[](fg:#80fcff)[ $symbol $version ](bg:#80fcff fg:#2d2b55)[](fg:#80fcff) "
+[rust]
+symbol = ""
+format = "[](fg:#80fcff)[ $symbol $version ](bg:#80fcff fg:#2d2b55)[](fg:#80fcff) "
 
 [cmd_duration]
-style = "#80fcff"
 min_time = 2000
+format = "[](fg:#3ad900)[  $duration ](bg:#3ad900 fg:#2d2b55)[](fg:#3ad900) "
+
+[time]
+disabled = false
+time_format = "%H:%M"
+format = "[](fg:#6943ff)[  $time ](bg:#6943ff fg:#ffffff)[](fg:#6943ff)"
 
 [character]
-success_symbol = "[>](bold #3ad900)"
-error_symbol = "[>](bold #ec3a37)"
+success_symbol = "[❯](bold #3ad900)"
+error_symbol = "[❯](bold #ec3a37)"
