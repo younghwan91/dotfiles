@@ -101,3 +101,49 @@ foreach ($p in $pairs) {
         Write-Host "installed: $($p[1])"
     }
 }
+
+# Terminal look: Shades of Purple + JetBrains Mono in Windows Terminal, Starship prompt and a small pwsh profile.
+# The profile is loaded by the Windows Terminal "PowerShell 7" entry (not from Documents, which Controlled folder
+# access can lock), so plain pwsh outside Windows Terminal stays untouched.
+$cfgDir = Join-Path $HOME '.config'
+New-Item -ItemType Directory -Force (Join-Path $cfgDir 'powershell') | Out-Null
+Copy-Item (Join-Path $PSScriptRoot 'starship.toml') (Join-Path $cfgDir 'starship.toml') -Force
+Copy-Item (Join-Path $PSScriptRoot 'powershell\profile.ps1') (Join-Path $cfgDir 'powershell\profile.ps1') -Force
+Write-Host "installed: $cfgDir\starship.toml, $cfgDir\powershell\profile.ps1"
+
+$wt = Join-Path $env:LOCALAPPDATA 'Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json'
+if (Test-Path $wt) {
+    $look = Get-Content (Join-Path $PSScriptRoot 'terminal\shades-of-purple.json') -Raw | ConvertFrom-Json
+    $s = Get-Content $wt -Raw | ConvertFrom-Json
+    $s.schemes = @(@($s.schemes) | Where-Object { $_.name -ne $look.scheme.name }) + $look.scheme
+    $def = $s.profiles.defaults
+    $def | Add-Member -NotePropertyName colorScheme -NotePropertyValue $look.scheme.name -Force
+    $def | Add-Member -NotePropertyName font -NotePropertyValue $look.font -Force
+    $pwshExe = (Get-Command pwsh -ErrorAction SilentlyContinue).Source
+    foreach ($p in $s.profiles.list | Where-Object { $_.name -eq 'PowerShell 7' -and $pwshExe }) {
+        $p | Add-Member -NotePropertyName commandline -NotePropertyValue "`"$pwshExe`" -NoLogo -NoExit -Command `". '$cfgDir\powershell\profile.ps1'`"" -Force
+    }
+    $json = $s | ConvertTo-Json -Depth 20
+    if ($json -ne (Get-Content $wt -Raw).TrimEnd()) {
+        Copy-Item $wt "$wt.bak-dotfiles" -Force
+        [IO.File]::WriteAllText($wt, $json, (New-Object System.Text.UTF8Encoding($false)))
+        Write-Host "updated: Windows Terminal settings (previous copy in settings.json.bak-dotfiles)"
+    }
+}
+
+# Orca: the same theme as a custom terminal theme. Orca rewrites its settings on exit, so only touch the file
+# while Orca is closed; the daily run picks it up later otherwise.
+$orcaData = Join-Path $env:APPDATA 'orca\orca-data.json'
+if ((Test-Path $orcaData) -and -not (Get-Process -Name orca -ErrorAction SilentlyContinue)) {
+    $theme = Get-Content (Join-Path $PSScriptRoot 'orca\shades-of-purple.json') -Raw | ConvertFrom-Json
+    $o = Get-Content $orcaData -Raw | ConvertFrom-Json
+    $o.settings.terminalCustomThemes = @(@($o.settings.terminalCustomThemes) | Where-Object { $_.id -ne $theme.id }) + $theme
+    $o.settings.terminalThemeDark = "custom:$($theme.id)"
+    $o.settings.terminalFontFamily = 'JetBrainsMono NFM'
+    $oj = $o | ConvertTo-Json -Depth 100
+    if ($oj -ne (Get-Content $orcaData -Raw).TrimEnd()) {
+        Copy-Item $orcaData "$orcaData.bak-dotfiles" -Force
+        [IO.File]::WriteAllText($orcaData, $oj, (New-Object System.Text.UTF8Encoding($false)))
+        Write-Host "updated: Orca terminal theme"
+    }
+}

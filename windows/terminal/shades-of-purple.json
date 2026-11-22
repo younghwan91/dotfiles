@@ -1,0 +1,26 @@
+{
+  "scheme": {
+    "name": "Shades of Purple",
+    "background": "#2D2B55",
+    "foreground": "#FFFFFF",
+    "cursorColor": "#FAD000",
+    "selectionBackground": "#B362FF",
+    "black": "#000000",
+    "red": "#EC3A37",
+    "green": "#3AD900",
+    "yellow": "#FAD000",
+    "blue": "#6943FF",
+    "purple": "#FB94FF",
+    "cyan": "#80FCFF",
+    "white": "#FFFFFF",
+    "brightBlack": "#5C5C61",
+    "brightRed": "#EC3A37",
+    "brightGreen": "#3AD900",
+    "brightYellow": "#FAD000",
+    "brightBlue": "#6943FF",
+    "brightPurple": "#FB94FF",
+    "brightCyan": "#80FCFF",
+    "brightWhite": "#FFFFFF"
+  },
+  "font": { "face": "JetBrainsMono NFM", "size": 12 }
+}

@@ -72,6 +72,33 @@
         },
         {
           "PackageIdentifier": "TradingView.TradingViewDesktop"
+        },
+        {
+          "PackageIdentifier": "Starship.Starship"
+        },
+        {
+          "PackageIdentifier": "junegunn.fzf"
+        },
+        {
+          "PackageIdentifier": "ajeetdsouza.zoxide"
+        },
+        {
+          "PackageIdentifier": "sharkdp.bat"
+        },
+        {
+          "PackageIdentifier": "eza-community.eza"
+        },
+        {
+          "PackageIdentifier": "dandavison.delta"
+        },
+        {
+          "PackageIdentifier": "JesseDuffield.lazygit"
+        },
+        {
+          "PackageIdentifier": "BurntSushi.ripgrep.MSVC"
+        },
+        {
+          "PackageIdentifier": "DEVCOM.JetBrainsMonoNerdFont"
         }
       ],
       "SourceDetails": {
