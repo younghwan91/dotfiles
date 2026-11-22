@@ -111,6 +111,25 @@ Copy-Item (Join-Path $PSScriptRoot 'starship.toml') (Join-Path $cfgDir 'starship
 Copy-Item (Join-Path $PSScriptRoot 'powershell\profile.ps1') (Join-Path $cfgDir 'powershell\profile.ps1') -Force
 Write-Host "installed: $cfgDir\starship.toml, $cfgDir\powershell\profile.ps1"
 
+# The shared profile is loaded by an all-users profile in the PowerShell install dir, not by $PROFILE: Controlled
+# folder access blocks Documents\PowerShell, and this one file covers Windows Terminal, Orca, VS Code and plain pwsh.
+# Writing under Program Files needs an elevated session (the daily task is one); otherwise say so.
+$pwshHome = Split-Path (Get-Command pwsh -ErrorAction SilentlyContinue).Source -ErrorAction SilentlyContinue
+if ($pwshHome) {
+    $allHosts = Join-Path $pwshHome 'profile.ps1'
+    $stubText = "# dotfiles: load the shared profile (Controlled folder access blocks Documents\PowerShell, so it lives in ~\.config).`r`n" +
+        "`$dotProfile = Join-Path `$HOME '.config\powershell\profile.ps1'`r`n" +
+        "if ((Test-Path `$dotProfile) -and -not `$global:DotfilesProfileLoaded) { `$global:DotfilesProfileLoaded = `$true; . `$dotProfile }`r`n"
+    $haveStub = if (Test-Path $allHosts) { Get-Content $allHosts -Raw } else { '' }
+    if ($haveStub -ne $stubText) {
+        if ($isElevated) {
+            [IO.File]::WriteAllText($allHosts, $stubText, (New-Object System.Text.UTF8Encoding($false)))
+            Write-Host "installed: $allHosts"
+        } else {
+            Write-Host "not elevated - skipped $allHosts (run install.ps1 as admin once so pwsh loads the prompt and aliases)"
+        }
+    }
+}
 $wt = Join-Path $env:LOCALAPPDATA 'Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json'
 if (Test-Path $wt) {
     $look = Get-Content (Join-Path $PSScriptRoot 'terminal\shades-of-purple.json') -Raw | ConvertFrom-Json
@@ -120,9 +139,7 @@ if (Test-Path $wt) {
     $def | Add-Member -NotePropertyName colorScheme -NotePropertyValue $look.scheme.name -Force
     $def | Add-Member -NotePropertyName font -NotePropertyValue $look.font -Force
     $pwshExe = (Get-Command pwsh -ErrorAction SilentlyContinue).Source
-    foreach ($p in $s.profiles.list | Where-Object { $_.name -eq 'PowerShell 7' -and $pwshExe }) {
-        $p | Add-Member -NotePropertyName commandline -NotePropertyValue "`"$pwshExe`" -NoLogo -NoExit -Command `". '$cfgDir\powershell\profile.ps1'`"" -Force
-    }
+    foreach ($p in $s.profiles.list | Where-Object { $_.name -eq 'PowerShell 7' }) { $p.PSObject.Properties.Remove('commandline') }
     $pw7 = $s.profiles.list | Where-Object { $_.name -eq 'PowerShell 7' } | Select-Object -First 1
     if ($pw7 -and $pwshExe) { $s.defaultProfile = $pw7.guid }
     # One shell in the menu: PowerShell 7 (+ WSL distros). cmd and Windows PowerShell 5.1 stay installed, just hidden.
