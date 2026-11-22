@@ -7,7 +7,7 @@ import importlib.util, sys, types
 sys.modules.setdefault("yaml", types.ModuleType("yaml"))   # 판정 함수만 본다 — yaml 은 안 쓴다
 spec = importlib.util.spec_from_file_location("ci_local", "git/hooks/ci-local.py")
 m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
-heavy = ["uv run --extra dev pytest -q", "uv run python scripts/verify_merge.py . --scope direct",
+heavy = ["uv run --extra dev pytest -q", "uv run python scripts/diff_coverage.py --base origin/main", "uv run python scripts/verify_merge.py . --scope direct",
          "python scripts/mutation_sample.py", "bash -c 'cd x && pytest'"]
 light = ["uv sync --extra dev", "uv run --extra dev ruff check src/ tests/", "uv run python -m compileall -q research",
          "uvx pre-commit run --all-files", "python3 -m py_compile src/a.py"]
