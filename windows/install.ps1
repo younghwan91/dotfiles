@@ -125,6 +125,8 @@ if (Test-Path $wt) {
     }
     $pw7 = $s.profiles.list | Where-Object { $_.name -eq 'PowerShell 7' } | Select-Object -First 1
     if ($pw7 -and $pwshExe) { $s.defaultProfile = $pw7.guid }
+    # One shell in the menu: PowerShell 7 (+ WSL distros). cmd and Windows PowerShell 5.1 stay installed, just hidden.
+    foreach ($p in $s.profiles.list) { $p | Add-Member -NotePropertyName hidden -NotePropertyValue (-not ($p.name -eq 'PowerShell 7' -or $p.name -like 'Ubuntu*')) -Force }
     $json = $s | ConvertTo-Json -Depth 20
     if ($json -ne (Get-Content $wt -Raw).TrimEnd()) {
         Copy-Item $wt "$wt.bak-dotfiles" -Force
