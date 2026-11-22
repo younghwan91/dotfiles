@@ -171,7 +171,7 @@ pwsh -File C:\dev\git\dotfiles\windows\install.ps1
 | `windows/powershell/profile.ps1` | `~\.config\powershell\profile.ps1` — Starship·zoxide 를 켜고 `ls`/`ll`(eza), `cat`(bat), `grep`(rg), `which`, `touch`, `head`, `tail`, `wc`, `sudo`, `gs`/`gl`/`gd` 같은 리눅스식 명령을 만든다 |
 | `windows/orca/shades-of-purple.json` | Orca 터미널에 같은 테마(Orca 가 꺼져 있을 때만 적용) |
 
-프로필은 `Documents` 밖에 두고, Windows Terminal 의 "PowerShell 7" 항목이 `-Command ". ~\.config\powershell\profile.ps1"` 로 불러온다. 그래서 Controlled folder access 에 막히지 않고, 터미널 밖의 pwsh 는 그대로다. 글꼴과 도구(`starship`, `eza`, `bat`, `ripgrep`, `zoxide`, `fzf`, `delta`, `lazygit`)는 `winget-packages.json` 에 들어 있다.
+프로필은 `Documents` 밖(`~\.config\powershell\profile.ps1`)에 둔다. Controlled folder access 가 `Documents\PowerShell` 만들기를 막기 때문이다. 대신 PowerShell 설치 폴더의 all-users 프로필(`C:\Program Files\PowerShell\7\profile.ps1`, 관리자 권한으로 `install.ps1` 을 돌릴 때 한 번 쓴다)이 그 파일을 불러와서, Windows Terminal·Orca·VS Code·그냥 `pwsh` 어디서나 같은 프롬프트와 명령이 나온다. 글꼴과 도구(`starship`, `eza`, `bat`, `ripgrep`, `zoxide`, `fzf`, `delta`, `lazygit`)는 `winget-packages.json` 에 들어 있다.
 
 ## Claude Code 상태줄
 
