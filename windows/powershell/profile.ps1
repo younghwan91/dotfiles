@@ -37,7 +37,7 @@ function mkdirp { New-Item -ItemType Directory -Force @args | Out-Null }
 function cp { Copy-Item -Recurse -Force @args }
 function mv { Move-Item -Force @args }
 function rmrf { Remove-Item -Recurse -Force @args }
-function ln { param([switch]$s, $target, $link) New-Item -ItemType SymbolicLink -Path $link -Target $target }
+function ln { $a = @($args | Where-Object { $_ -ne '-s' }); New-Item -ItemType SymbolicLink -Path $a[1] -Target $a[0] }
 function df { Get-PSDrive -PSProvider FileSystem | Format-Table Name, @{n = 'UsedGB'; e = { [int]($_.Used / 1GB) } }, @{n = 'FreeGB'; e = { [int]($_.Free / 1GB) } } }
 function du { Get-ChildItem -Recurse -Force -File @args | Measure-Object Length -Sum | ForEach-Object { '{0:N1} MB' -f ($_.Sum / 1MB) } }
 function pkill { Stop-Process -Name @args -Force }
