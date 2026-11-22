@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 280" width="1200" height="280" fill="none" role="img" aria-label="dotfiles — Unified shell, Git, Vim, and Claude Code configuration">
+  <defs>
+    <linearGradient id="df-bl-card" x1="0" y1="0" x2="1200" y2="280" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FAF8FF"/>
+      <stop offset="100%" stop-color="#F1EDFF"/>
+    </linearGradient>
+    <linearGradient id="df-bl-bg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1E103C"/>
+      <stop offset="100%" stop-color="#2D1B69"/>
+    </linearGradient>
+    <linearGradient id="df-bl-accent" x1="16" y1="20" x2="48" y2="44" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#A78BFA"/>
+      <stop offset="100%" stop-color="#34D399"/>
+    </linearGradient>
+    <linearGradient id="df-bl-term" x1="680" y1="34" x2="1144" y2="246" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1E103C"/>
+      <stop offset="100%" stop-color="#24144D"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Card -->
+  <rect x="1" y="1" width="1198" height="278" rx="18" fill="url(#df-bl-card)" stroke="#DDD6FE" stroke-width="1.5"/>
+
+  <!-- Subtle background grid -->
+  <g stroke="#8B5CF6" stroke-opacity="0.06" stroke-width="1">
+    <path d="M660 0 V280 M720 0 V280 M780 0 V280 M840 0 V280 M900 0 V280 M960 0 V280 M1020 0 V280 M1080 0 V280 M1140 0 V280"/>
+    <path d="M620 56 H1200 M620 112 H1200 M620 168 H1200 M620 224 H1200"/>
+  </g>
+
+  <!-- Brand mark (64x64 at 56,52) -->
+  <g transform="translate(56, 52)">
+    <rect width="64" height="64" rx="14" fill="url(#df-bl-bg)"/>
+    <rect x="1" y="1" width="62" height="62" rx="13" stroke="#A78BFA" stroke-opacity="0.32" stroke-width="1.5"/>
+    <circle cx="17" cy="17" r="2.2" fill="#F472B6"/>
+    <circle cx="24" cy="17" r="2.2" fill="#FBBF24"/>
+    <circle cx="31" cy="17" r="2.2" fill="#34D399"/>
+    <path d="M18 28L28 36L18 44" stroke="url(#df-bl-accent)" stroke-width="3.75" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M33 44H46" stroke="#34D399" stroke-width="3.75" stroke-linecap="round"/>
+    <circle cx="45" cy="29" r="3" fill="#A78BFA"/>
+  </g>
+
+  <!-- Title & Tagline -->
+  <text x="138" y="96" fill="#0F172A" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="40" font-weight="800" letter-spacing="-0.8">dotfiles</text>
+  <text x="56" y="156" fill="#334155" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="18.5" font-weight="500">Unified shell, Git, Vim, and Claude Code config across every OS.</text>
+
+  <!-- Subtle tech pills -->
+  <rect x="56" y="186" width="236" height="32" rx="16" fill="#EDE9FE" stroke="#C4B5FD" stroke-width="1"/>
+  <text x="174" y="207" text-anchor="middle" fill="#5B21B6" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="12.5" font-weight="600">macOS · Linux · WSL · Win</text>
+
+  <rect x="304" y="186" width="196" height="32" rx="16" fill="#ECFDF5" stroke="#A7F3D0" stroke-width="1"/>
+  <text x="402" y="207" text-anchor="middle" fill="#047857" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="12.5" font-weight="600">zsh · git · vim · claude</text>
+
+  <!-- Right Artwork: Terminal Shell Prompt -->
+  <g>
+    <rect x="680" y="34" width="464" height="212" rx="14" fill="url(#df-bl-term)" stroke="#A78BFA" stroke-opacity="0.35" stroke-width="1.5"/>
+    <!-- Title bar -->
+    <path d="M680 48 C680 40.3 686.3 34 694 34 H1130 C1137.7 34 1144 40.3 1144 48 V66 H680 V48 Z" fill="#150B2B"/>
+    <line x1="680" y1="66" x2="1144" y2="66" stroke="#A78BFA" stroke-opacity="0.2" stroke-width="1"/>
+    <circle cx="704" cy="50" r="5" fill="#F472B6"/>
+    <circle cx="722" cy="50" r="5" fill="#FBBF24"/>
+    <circle cx="740" cy="50" r="5" fill="#34D399"/>
+    <text x="912" y="54" text-anchor="middle" fill="#C4B5FD" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="12" font-weight="600">zsh — ~/dotfiles</text>
+
+    <!-- Terminal lines -->
+    <text x="704" y="96" fill="#A78BFA" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13.5" font-weight="700">❯</text>
+    <text x="722" y="96" fill="#F8FAFC" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13.5">./install.sh --profile vanilla</text>
+
+    <text x="704" y="126" fill="#34D399" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13">✓</text>
+    <text x="722" y="126" fill="#CBD5E1" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13">symlinked .zshrc, .gitconfig, .vimrc</text>
+
+    <text x="704" y="152" fill="#34D399" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13">✓</text>
+    <text x="722" y="152" fill="#CBD5E1" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13">armed pre-commit &amp; ci-local.py hooks</text>
+
+    <text x="704" y="178" fill="#34D399" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13">✓</text>
+    <text x="722" y="178" fill="#CBD5E1" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13">configured claude HUD &amp; guard.py</text>
+
+    <text x="704" y="212" fill="#A78BFA" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13.5" font-weight="700">❯</text>
+    <text x="722" y="212" fill="#94A3B8" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13.5">pull-all</text>
+    <rect x="794" y="199" width="9" height="16" rx="1.5" fill="#34D399"/>
+  </g>
+</svg>
