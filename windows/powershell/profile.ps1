@@ -55,3 +55,17 @@ function g { git @args }
 function gs { git status -sb }
 function gl { git log --oneline --graph -20 }
 function gd { git diff @args }
+
+# --- ported from zsh/zshrc and bin/ ---------------------------------------------------------------------
+function uvrun { uv run python @args }
+function venv { . .\.venv\Scripts\Activate.ps1 }
+# pullall: fast-forward every git repo under C:\dev\git and ~\git (bin/pull-all, minus the CI gate).
+function pullall {
+    foreach ($root in 'C:\dev\git', (Join-Path $HOME 'git')) {
+        if (-not (Test-Path $root)) { continue }
+        Get-ChildItem $root -Directory | Where-Object { Test-Path (Join-Path $_.FullName '.git') } | ForEach-Object {
+            $out = git -C $_.FullName pull --ff-only 2>&1 | Select-Object -Last 1
+            '{0,-28} {1}' -f $_.Name, $out
+        }
+    }
+}
