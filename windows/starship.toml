@@ -1,0 +1,22 @@
+# Starship prompt, Shades of Purple palette. Installed to ~\.config\starship.toml by windows\install.ps1.
+add_newline = false
+format = "$directory$git_branch$git_status$python$nodejs$cmd_duration$line_break$character"
+
+[directory]
+style = "bold #fb94ff"
+truncation_length = 3
+
+[git_branch]
+style = "bold #fad000"
+symbol = " "
+
+[git_status]
+style = "#ec3a37"
+
+[cmd_duration]
+style = "#80fcff"
+min_time = 2000
+
+[character]
+success_symbol = "[>](bold #3ad900)"
+error_symbol = "[>](bold #ec3a37)"

@@ -1,0 +1,15 @@
+{
+  "id": "manual:shades-of-purple",
+  "name": "Shades of Purple",
+  "source": "manual",
+  "mode": "dark",
+  "importedAt": "2026-11-22T00:00:00.000Z",
+  "terminal": {
+    "background": "#2d2b55", "foreground": "#ffffff", "cursor": "#fad000", "cursorAccent": "#2d2b55",
+    "selectionBackground": "#b362ff", "selectionForeground": "#ffffff",
+    "black": "#000000", "red": "#ec3a37", "green": "#3ad900", "yellow": "#fad000",
+    "blue": "#6943ff", "magenta": "#fb94ff", "cyan": "#80fcff", "white": "#ffffff",
+    "brightBlack": "#5c5c61", "brightRed": "#ec3a37", "brightGreen": "#3ad900", "brightYellow": "#fad000",
+    "brightBlue": "#6943ff", "brightMagenta": "#fb94ff", "brightCyan": "#80fcff", "brightWhite": "#ffffff"
+  }
+}
