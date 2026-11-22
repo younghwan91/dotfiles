@@ -1,6 +1,8 @@
 # dotfiles
 
-셸·git·vim·Claude Code 설정 — macOS·Linux·WSL 을 레포 하나로.
+셸·git·vim·Claude Code 설정 — macOS·Linux·WSL·Windows 를 레포 하나로.
+
+![레포 하나가 모든 PC 로 — macOS·Linux·WSL 은 심볼릭 링크, Windows 는 install.ps1 이 복사](docs/img/layout.svg)
 
 ```bash
 gh repo clone <owner>/dotfiles ~/git/dotfiles
@@ -154,7 +156,22 @@ pwsh -File C:\dev\git\dotfiles\windows\install.ps1
 
 새 PC: `pwsh -File windows\setup.ps1` 이 `windows/winget-packages.json`(Windows 판 Brewfile)으로 `winget import` 를 한 뒤 `install.ps1` 을 돌린다. 목록은 `winget export -o windows\winget-packages.json` 으로 새로 받고, 런타임·프레임워크는 지운다(의존성으로 따라 들어온다).
 
-PowerShell 프로필이 아니라 `.cmd` 심인 건 일부러다: cmd, Windows PowerShell 5.1, pwsh 7 어디서나 돌고, `Documents`(프로필이 거기 있는데 Defender 의 제어된 폴더 액세스가 잠글 수 있다)나 실행 정책(5.1 은 스크립트가 꺼진 채 나온다)에 기대지 않는다.
+`windows/bin` 이 PowerShell 프로필이 아니라 `.cmd` 심인 건 일부러다: cmd, Windows PowerShell 5.1, pwsh 7 어디서나 돌고, `Documents`(프로필이 거기 있는데 Defender 의 제어된 폴더 액세스가 잠글 수 있다)나 실행 정책(5.1 은 스크립트가 꺼진 채 나온다)에 기대지 않는다.
+
+### 터미널 모양
+
+![Windows Terminal — Shades of Purple 테마, JetBrains Mono, 알약 모양 Starship 프롬프트](docs/img/windows-terminal.svg)
+
+`install.ps1` 이 Linux 의 zsh + p10k 와 비슷한 모양을 Windows 에도 맞춘다:
+
+| 레포 안 | 하는 일 |
+|---|---|
+| `windows/terminal/shades-of-purple.json` | Windows Terminal 에 Shades of Purple 색 구성표 + `JetBrainsMono NFM` 글꼴을 병합하고, 메뉴에는 PowerShell 7 만 남긴다(cmd·Windows PowerShell 은 숨길 뿐 지우지 않는다) |
+| `windows/starship.toml` | `~\.config\starship.toml` — p10k rainbow 와 비슷한 알약 모양 [Starship](https://starship.rs) 프롬프트 |
+| `windows/powershell/profile.ps1` | `~\.config\powershell\profile.ps1` — Starship·zoxide 를 켜고 `ls`/`ll`(eza), `cat`(bat), `grep`(rg), `which`, `touch`, `head`, `tail`, `wc`, `sudo`, `gs`/`gl`/`gd` 같은 리눅스식 명령을 만든다 |
+| `windows/orca/shades-of-purple.json` | Orca 터미널에 같은 테마(Orca 가 꺼져 있을 때만 적용) |
+
+프로필은 `Documents` 밖에 두고, Windows Terminal 의 "PowerShell 7" 항목이 `-Command ". ~\.config\powershell\profile.ps1"` 로 불러온다. 그래서 Controlled folder access 에 막히지 않고, 터미널 밖의 pwsh 는 그대로다. 글꼴과 도구(`starship`, `eza`, `bat`, `ripgrep`, `zoxide`, `fzf`, `delta`, `lazygit`)는 `winget-packages.json` 에 들어 있다.
 
 ## Claude Code 상태줄
 
