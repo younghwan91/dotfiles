@@ -119,8 +119,8 @@ def cleanup() -> None:
         subprocess.run(["git", "worktree", "prune"], cwd=top, capture_output=True)
 
 
-#: 공개 레포에서 로컬로 돌리지 않는 무거운 스텝 — GitHub CI 가 돈다.
-HEAVY = re.compile(r"\b(pytest|verify_merge|mutation_sample|mutmut)\b")
+#: 공개 레포에서 로컬로 돌리지 않는 무거운 스텝 — GitHub CI 가 돈다. 커버리지 스텝은 건너뛴 pytest 의 결과를 읽으니 같이 뺀다.
+HEAVY = re.compile(r"\b(pytest|verify_merge|mutation_sample|mutmut|diff_coverage|diff-cover|coverage)\b")
 
 
 def is_heavy(script: str) -> bool:
