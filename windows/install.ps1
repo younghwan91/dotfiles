@@ -123,6 +123,8 @@ if (Test-Path $wt) {
     foreach ($p in $s.profiles.list | Where-Object { $_.name -eq 'PowerShell 7' -and $pwshExe }) {
         $p | Add-Member -NotePropertyName commandline -NotePropertyValue "`"$pwshExe`" -NoLogo -NoExit -Command `". '$cfgDir\powershell\profile.ps1'`"" -Force
     }
+    $pw7 = $s.profiles.list | Where-Object { $_.name -eq 'PowerShell 7' } | Select-Object -First 1
+    if ($pw7 -and $pwshExe) { $s.defaultProfile = $pw7.guid }
     $json = $s | ConvertTo-Json -Depth 20
     if ($json -ne (Get-Content $wt -Raw).TrimEnd()) {
         Copy-Item $wt "$wt.bak-dotfiles" -Force
