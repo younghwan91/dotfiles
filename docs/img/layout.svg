@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="400" viewBox="0 0 900 400" role="img" aria-label="One repo, linked into every PC: symlinks on macOS, Linux and WSL, copies on Windows">
+  <title>dotfiles: one repo, every PC</title>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6943ff"/></marker>
+  </defs>
+  <g font-family="'Segoe UI',Helvetica,Arial,sans-serif" font-size="14">
+    <rect width="900" height="400" fill="#f7f5ff"/>
+
+    <!-- repo -->
+    <rect x="30" y="130" width="210" height="140" rx="14" fill="#2d2b55"/>
+    <text x="135" y="168" fill="#fad000" text-anchor="middle" font-size="18" font-weight="bold">dotfiles</text>
+    <text x="135" y="196" fill="#fff" text-anchor="middle">zsh/ git/ vim/ bin/</text>
+    <text x="135" y="218" fill="#fff" text-anchor="middle">claude/ windows/ macos/</text>
+    <text x="135" y="246" fill="#fb94ff" text-anchor="middle" font-size="12">+ personal/ (private repo)</text>
+
+    <!-- targets -->
+    <g>
+      <rect x="360" y="30" width="510" height="76" rx="12" fill="#fff" stroke="#9d5cff" stroke-width="2"/>
+      <text x="380" y="58" fill="#2d2b55" font-weight="bold">macOS</text>
+      <text x="380" y="82" fill="#555">symlinks: ~/.zshrc  ~/.p10k.zsh  ~/.gitconfig  Brewfile  karabiner</text>
+
+      <rect x="360" y="124" width="510" height="76" rx="12" fill="#fff" stroke="#9d5cff" stroke-width="2"/>
+      <text x="380" y="152" fill="#2d2b55" font-weight="bold">Linux / WSL</text>
+      <text x="380" y="176" fill="#555">symlinks: ~/.zshrc  ~/.p10k.zsh  git hooks  cron blocks  systemd rclone</text>
+
+      <rect x="360" y="218" width="510" height="76" rx="12" fill="#fff" stroke="#6943ff" stroke-width="3"/>
+      <text x="380" y="246" fill="#2d2b55" font-weight="bold">Windows <tspan fill="#6943ff" font-weight="normal">(install.ps1, copies - symlinks need admin)</tspan></text>
+      <text x="380" y="270" fill="#555">Windows Terminal theme · Starship + pwsh profile · update/cla shims · SSH hosts</text>
+
+      <rect x="360" y="312" width="510" height="60" rx="12" fill="#fff" stroke="#b3a8ff" stroke-width="2"/>
+      <text x="380" y="338" fill="#2d2b55" font-weight="bold">Claude Code</text>
+      <text x="380" y="360" fill="#555">CLAUDE.md · guard hook · status line  (every OS)</text>
+    </g>
+
+    <!-- arrows -->
+    <g stroke="#6943ff" stroke-width="2.5" fill="none" marker-end="url(#a)">
+      <path d="M240 175 C300 175 300 68 354 68"/>
+      <path d="M240 190 C300 190 300 162 354 162"/>
+      <path d="M240 215 C300 215 300 256 354 256"/>
+      <path d="M240 240 C300 240 300 342 354 342"/>
+    </g>
+    <text x="300" y="392" fill="#888" font-size="12" text-anchor="middle">git pull = every PC updated (daily sync task on Windows)</text>
+  </g>
+</svg>

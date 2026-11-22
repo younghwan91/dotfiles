@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="470" viewBox="0 0 900 470" role="img" aria-label="Windows Terminal with the Shades of Purple theme and the pill-style Starship prompt">
+  <title>Windows Terminal: Shades of Purple + Starship pill prompt</title>
+  <defs><clipPath id="win"><rect width="900" height="470" rx="12"/></clipPath></defs>
+  <g clip-path="url(#win)" font-family="'JetBrainsMono NFM','JetBrains Mono','Cascadia Mono',Consolas,monospace" font-size="15">
+    <rect width="900" height="470" fill="#2d2b55"/>
+    <rect width="900" height="38" fill="#1e1c3f"/>
+    <circle cx="22" cy="19" r="6" fill="#ec3a37"/><circle cx="44" cy="19" r="6" fill="#fad000"/><circle cx="66" cy="19" r="6" fill="#3ad900"/>
+    <text x="450" y="24" fill="#b3a8ff" text-anchor="middle" font-size="13">PowerShell 7</text>
+
+    <!-- prompt 1 -->
+    <g transform="translate(22,70)">
+      <rect width="52" height="26" rx="13" fill="#6943ff"/><text x="26" y="18" fill="#fff" text-anchor="middle">Win</text>
+      <rect x="60" width="148" height="26" rx="13" fill="#9d5cff"/><text x="134" y="18" fill="#fff" text-anchor="middle" font-weight="bold">~/dotfiles</text>
+      <rect x="216" width="196" height="26" rx="13" fill="#fb94ff"/><text x="314" y="18" fill="#2d2b55" text-anchor="middle">main</text>
+      <rect x="420" width="48" height="26" rx="13" fill="#fad000"/><text x="444" y="18" fill="#2d2b55" text-anchor="middle">!2</text>
+      <rect x="736" width="140" height="26" rx="13" fill="#6943ff"/><text x="806" y="18" fill="#fff" text-anchor="middle">15:48</text>
+    </g>
+    <text x="22" y="126" fill="#3ad900" font-weight="bold">❯</text><text x="44" y="126" fill="#fff">ll</text>
+    <g fill="#fff">
+      <text x="22" y="154"><tspan fill="#80fcff">drwxr-xr-x</tspan>  <tspan fill="#fb94ff">windows</tspan></text>
+      <text x="22" y="176"><tspan fill="#80fcff">drwxr-xr-x</tspan>  <tspan fill="#fb94ff">zsh</tspan></text>
+      <text x="22" y="198"><tspan fill="#80fcff">.rw-r--r--</tspan>  <tspan fill="#fff">README.md</tspan>   <tspan fill="#3ad900">M</tspan></text>
+    </g>
+
+    <!-- prompt 2 -->
+    <g transform="translate(22,226)">
+      <rect width="52" height="26" rx="13" fill="#6943ff"/><text x="26" y="18" fill="#fff" text-anchor="middle">Win</text>
+      <rect x="60" width="148" height="26" rx="13" fill="#9d5cff"/><text x="134" y="18" fill="#fff" text-anchor="middle" font-weight="bold">~/dotfiles</text>
+      <rect x="216" width="196" height="26" rx="13" fill="#fb94ff"/><text x="314" y="18" fill="#2d2b55" text-anchor="middle">main</text>
+      <rect x="420" width="116" height="26" rx="13" fill="#80fcff"/><text x="478" y="18" fill="#2d2b55" text-anchor="middle">py 3.12</text>
+      <rect x="736" width="140" height="26" rx="13" fill="#3ad900"/><text x="806" y="18" fill="#2d2b55" text-anchor="middle">took 3s</text>
+    </g>
+    <text x="22" y="282" fill="#3ad900" font-weight="bold">❯</text><text x="44" y="282" fill="#fff">grep -n pill windows/starship.toml | head -n 2</text>
+    <text x="22" y="310" fill="#fad000">1</text><text x="40" y="310" fill="#fff">: # Starship prompt ... pill style like the p10k rainbow prompt</text>
+    <text x="22" y="332" fill="#fad000">8</text><text x="40" y="332" fill="#fff">: format = "[](fg:#6943ff)[ $symbol ](bg:#6943ff fg:#ffffff)"</text>
+
+    <!-- prompt 3 (error) -->
+    <text x="22" y="374" fill="#ec3a37" font-weight="bold">❯</text><text x="44" y="374" fill="#fff">which eza zoxide</text>
+    <text x="22" y="398" fill="#b3a8ff">C:\Users\you\AppData\Local\Microsoft\WinGet\Links\eza.exe</text>
+    <text x="22" y="420" fill="#b3a8ff">C:\Users\you\AppData\Local\Microsoft\WinGet\Links\zoxide.exe</text>
+    <text x="22" y="452" fill="#3ad900" font-weight="bold">❯</text><rect x="44" y="438" width="9" height="18" fill="#fad000"/>
+  </g>
+</svg>
