@@ -48,6 +48,26 @@ def keep_anchors(block: str, back: str) -> str:
     return re.sub(r"\]\(#([^)\s]+)\)", lambda m: m.group(0) if m.group(1) in here else f"]({back}#{m.group(1)})", block)
 
 
+TOC_START, TOC_END = "<!-- toc -->", "<!-- /toc -->"
+
+
+def is_korean(text: str) -> bool:
+    return len(re.findall(r"[\uac00-\ud7a3]", text)) > 50
+
+
+def toc(text: str) -> str:
+    """새 문서의 ``##`` 제목으로 목차 — 앵커는 GitHub 방식."""
+    items = [f"- [{h}](#{_slug(h)})" for h in re.findall(r"^## +(.+?) *#*$", text, re.M)]
+    return f"{TOC_START}\n" + "\n".join(items) + f"\n{TOC_END}"
+
+
+def with_toc(text: str) -> str:
+    if TOC_START in text and TOC_END in text:
+        a, rest = text.split(TOC_START, 1)
+        return a + toc(text) + rest.split(TOC_END, 1)[1]
+    return text
+
+
 def find_heading(lines: list[str], heading: str, start: int = 0) -> int:
     for i in range(start, len(lines)):
         if lines[i].rstrip("\n").startswith(heading):
@@ -69,7 +89,7 @@ def main(argv: list[str] | None = None) -> int:
     lines = readme.read_text("utf-8").splitlines(keepends=True)
     i = find_heading(lines, a.start)
     j = find_heading(lines, a.end, i + 1) if a.end else len(lines)
-    block = "".join(lines[i:j]).rstrip() + "\n"
+    block = re.sub(r"(\n\s*(---|\*\*\*)\s*)+$", "", "".join(lines[i:j]).rstrip()) + "\n"   # 앞 절 끝의 가로줄은 딸려 가지 않게
     moved = rewrite(block, readme.parent.resolve(), out.parent.resolve())
     back = os.path.relpath(readme.resolve(), out.parent.resolve())
     moved = keep_anchors(moved, back)
@@ -79,9 +99,11 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     out.parent.mkdir(parents=True, exist_ok=True)
     if out.exists():
-        out.write_text(out.read_text("utf-8").rstrip() + "\n\n" + moved, "utf-8")
+        out.write_text(with_toc(out.read_text("utf-8").rstrip() + "\n\n" + moved), "utf-8")
     else:
-        out.write_text(f"# {a.title}\n\n처음이라면 [README]({back}) 부터.\n\n---\n\n{moved}", "utf-8")
+        ko = is_korean("".join(lines))
+        intro = f"처음이라면 [README]({back}) 부터." if ko else f"New here? Start with the [README]({back})."
+        out.write_text(with_toc(f"# {a.title}\n\n{intro}\n\n{TOC_START}\n{TOC_END}\n\n{moved}"), "utf-8")
     readme.write_text("".join(lines[:i] + lines[j:]), "utf-8")
     print(f"옮겼다: {j - i}줄 → {out}. README {len(lines)} → {len(lines) - (j - i)}줄")
     return 0

@@ -52,6 +52,13 @@ echo '[x](#nowhere)' >> "$T/docs/guide.md"
 if ! python3 "$S/check_links.py" "$T/docs/guide.md" >/dev/null; then ok; else no check_links_catches_dangling_anchor; fi
 if python3 "$S/readme_stats.py" "$T/README.md" | grep -q 'README.md'; then ok; else no readme_stats_runs; fi
 if bash "$S/find_readme_refs.sh" "$T" >/dev/null; then ok; else no find_refs_runs; fi
+# 새 가이드에는 목차·영어 안내(README 가 영어), 끝 가로줄은 안 딸려 간다
+if grep -q '<!-- toc -->' "$T/docs/guide.md" && grep -q 'New here?' "$T/docs/guide.md"; then ok; else no move_sections_toc_and_language; fi
+# 글자 그대로 옮겼는지 — 옛 README 의 줄은 새 README·docs 어딘가에 남는다, 지운 줄은 드러난다
+printf '# demo\n\n## Quick start\n\nsee [other](docs/other.md)\n\n## 1. Long part\n\n![pic](docs/images/a.png) and [code](scripts/run.py) and [back](#quick-start) and [same](#1-long-part)\n\n## License\n\nMIT\n' > "$T/old.md"
+if python3 "$S/verify_moved.py" --before "$T/old.md" --after "$T/README.md" "$T/docs" >/dev/null; then ok; else no verify_moved_finds_moved_lines; fi
+sed -i 's/^MIT$/Apache/' "$T/README.md"
+if ! python3 "$S/verify_moved.py" --before "$T/old.md" --after "$T/README.md" "$T/docs" >/dev/null; then ok; else no verify_moved_flags_lost_line; fi
 mkdir -p "$T/samples"; cp "$T/README.md" "$T/samples/a.md"
 if python3 "$S/readme_nature.py" "$T/samples" | grep -q "레이아웃"; then ok; else no readme_nature_runs; fi
 

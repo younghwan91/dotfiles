@@ -15,12 +15,14 @@ Do the whole job without asking for each step. Ask only when a choice genuinely 
 python3 <skill>/scripts/readme_stats.py README.md [README.*.md]
 ```
 
-It prints lines, `##` count, images, badges and code blocks. Compare against `references/patterns.md` (structure and length of trending READMEs) and `references/style.md` (their voice, typography and layout, measured). To re-measure the trend on fresh samples, put README files in a folder and run `scripts/readme_nature.py <folder>`. Targets: **about 80–150 lines, 6–10 `##` sections**; above ~300 lines something is in the wrong place.
+It prints lines, `##` count, images, badges and code blocks. Compare against `references/patterns.md` (structure and length of trending READMEs) and `references/style.md` (their voice, typography and layout, measured). To re-measure the trend on fresh samples, put README files in a folder and run `scripts/readme_nature.py <folder>`. Length target (one number everywhere): **aim for 80–150 lines; up to 250 is fine when the extra lines are pictures, a features table or install variants; above 250 move more out.** 6–10 `##` sections.
 
 Then read the README top to bottom as a first-time visitor and note, per section: *does a first-time reader need this on the front page?* Typical answers:
 - Keep (shortened): what it is, demo, quick start, what you get, how to use your own data / install, the one or two caveats that change how results are read, license, how to contribute or support.
 - Move to `docs/`: architecture and file trees, operations and schedules, every key and column explained, formulas and definitions, validation details, development and testing commands, comparison tables, long FAQs.
 - Delete only true duplication and dated status logs ("as of last Tuesday we…"). When in doubt, move instead of delete.
+
+**Keep what the brand already is.** If the README has a banner image, a custom `<p align="center">` block, a logo layout or an established register (e.g. Korean "~다" or "~합니다"), keep it and apply the patterns inside it — do not swap a working hero for the skeleton.
 
 Also read the project rules files and any brand guide now — they may fix the tagline, required notices, words that must not appear, or which pictures may be public.
 
@@ -43,12 +45,15 @@ python3 <skill>/scripts/move_sections.py --readme README.md --out docs/guide.md 
 - Add a short table of contents at the top of the new file and a line pointing back to the README.
 - If the repo already has a docs folder with a natural home for a section (e.g. an existing `architecture.md`), put it there instead; one `guide.md` is the default.
 - Run it with `--dry-run` first if the start/end headings are ambiguous.
+- **Part of a section:** headings match by prefix at any level, so `--start "### Updating" --end "## How it works"` moves the tail of a section and leaves its first part (e.g. the install command) in the README.
+- **Don't duplicate.** Something a first-time reader needs (install command, the main table) lives in the README; the guide links back to it (`[Install](../README.md#install)`) instead of keeping a second copy that will drift.
+- The script writes a heading, a back-link and a table of contents in the README's language when it creates the file, and drops trailing `---` rules from the moved block.
 
 ## 4. Write the new README
 
 Use the skeleton in `references/patterns.md` and write in the manner of `references/style.md` — talk to the reader, short sentences, a bold noun-phrase tagline, bold-led bullets, code in backticks, no hype words or exclamation marks, a picture in the first screen. Fill it from what the project already says — do not invent claims, numbers, features or badges. In short:
 
-1. **Hero** (centered `<div align="center">`): logo if the repo has one, `# name`, one bold sentence that says what it does for whom, one plain line of context, 2–4 badges that work for anonymous visitors (release, language version, license; no CI badge for private repos), a link row (demo · docs · install/own data · other languages · sponsor).
+1. **Hero** (centered `<div align="center">`, or the repo's existing hero block): logo if the repo has one, `# name`, one bold sentence that says what it does for whom, one plain line of context, 0–4 badges that are true and work for anonymous visitors — a release badge only if a release exists, license only if a LICENSE file exists, no CI badge for private repos; zero badges is fine — and a link row (demo · docs · install/own data · other languages · sponsor).
 2. **Demo picture** right under the hero — the best existing GIF/screenshot; caption in small text. Respect rules about synthetic/demo-only images.
 3. **Quick start**: ≤3 commands that run on a fresh clone without credentials or private data; one sentence about what you will see.
 4. **What it does / What you get**: a small table or 3–6 bullets, optionally two screenshots side by side.
@@ -74,4 +79,10 @@ Using the list from step 2:
 python3 <skill>/scripts/check_links.py README.md README.*.md docs/guide.md
 ```
 
-It checks that every relative link and image target exists and that `#anchors` resolve to headings. Then run the repo's own tests and linters. Report before/after line counts, where each moved section went, and anything the owner must do by hand (e.g. upload a social preview). Ship through the repo's normal flow (branch → PR, or whatever its rules say).
+It checks that every relative link and image target exists and that `#anchors` resolve to headings. Add `--baseline HEAD` (or the commit before your change) to report only links you broke — targets that were already missing are listed separately.
+
+```bash
+python3 <skill>/scripts/verify_moved.py --before <(git show HEAD:README.md) --after README.md docs/
+```
+
+It confirms every non-empty line of the old README still exists somewhere (README or the docs you moved to) and lists the ones that don't, so intended rewrites are visible and accidental losses are caught. Then run the repo's own tests and linters. Report before/after line counts, where each moved section went, and anything the owner must do by hand (e.g. upload a social preview). Ship through the repo's normal flow (branch → PR, or whatever its rules say).

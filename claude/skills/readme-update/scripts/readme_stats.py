@@ -33,7 +33,7 @@ def main(argv: list[str]) -> int:
         for ln in Path(p).read_text("utf-8").splitlines():
             if ln.startswith("## "):
                 print(f"    {ln}")
-    print("\n기준(트렌딩, 2026-11): 읽기 좋은 쪽은 80~250줄·## 6~10개. 300줄을 넘으면 첫 화면 밖의 것이 섞여 있다.")
+    print("\n목표(트렌딩, 2026-11): 80~150줄, 그림·기능 표·설치 변형이 있으면 250줄까지. 250줄을 넘으면 더 옮긴다. ## 6~10개.")
     return 0
 
 
