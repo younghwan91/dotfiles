@@ -9,6 +9,10 @@ A README is the front door. People decide in the first screen whether to keep re
 
 Do the whole job without asking for each step. Ask only when a choice genuinely belongs to the owner (for example, two conflicting taglines). Treat the repo's own rules (`CLAUDE.md`, `AGENTS.md`, `CONTRIBUTING.md`, a brand guide, a wording/banned-words list, legal or data notices) as overriding the patterns here.
 
+## 0. Pick the main language
+
+`README.md` is written in the language of the people expected to use the project most — decide it yourself from what the project is for, don't ask. A tool for Korean markets, Korean public data or Korean-speaking teams gets a Korean `README.md`; a general developer library or CLI gets English. Other languages go in `README.<lang>.md` (`README.en.md`, `README.ko.md`) with the same structure, linked from the hero's link row. If the current main language is the wrong one, swap the files (and fix links and tests that name them) as part of the job.
+
 ## 1. Measure and read
 
 ```bash
