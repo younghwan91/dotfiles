@@ -20,6 +20,8 @@ jobs:
         run: python3 tests/check_no_personal.py
       - name: identity hooks
         run: bash tests/test_identity.sh
+      - name: commit-msg English-only
+        run: bash tests/test_commit_msg.sh
       - name: cron-install personal/ crontab
         run: bash tests/test_cron_install.sh
       - name: install profiles

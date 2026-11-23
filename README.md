@@ -71,6 +71,7 @@ Git follows the same pattern: `git/gitconfig` includes `~/.gitconfig.local` for 
 **Git Hooks** (applied globally via `core.hooksPath`) run across all repositories:
 
 - `pre-commit` — checks commit identity (when `~/.config/git/allowed-emails` exists; `personal` rejects if missing). Repos with `.pre-commit-config.yaml` also run `uvx pre-commit run`.
+- `commit-msg` — rejects commit messages containing Hangul, kana or CJK ideographs (commit messages are English). One-off override: `COMMIT_MSG_ALLOW_NON_ENGLISH=1`.
 - `pre-push` — after identity checks, runs `ci-local.py`: reads the repo's `.github/workflows/ci.yml` and executes its steps against the **commits being pushed** (in a separate worktree + venv under `.git/ci-local/`). Skips `services:` jobs and `uses:` actions, and respects `continue-on-error`. Bypass with `git push --no-verify` or `SKIP_CI_LOCAL=1`.
 
 **Cross-Host Repos & Cron** (peer hosts configured via `sync.peers` in `~/.gitconfig.local`; failure alert script via `sync.alert`):

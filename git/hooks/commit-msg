@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Commit messages are English (claude/CLAUDE.md "Commit messages are in English").
+# Rejects a message with Hangul, kana or CJK ideographs outside comment lines.
+# A repo's own commit-msg hook runs first (same chaining rule as pre-commit).
+set -euo pipefail
+LOCAL="$(git rev-parse --path-format=absolute --git-common-dir)/hooks/commit-msg"
+if [ -x "$LOCAL" ]; then
+  "$LOCAL" "$@" || exit $?
+fi
+[ -n "${COMMIT_MSG_ALLOW_NON_ENGLISH:-}" ] && exit 0
+python3 - "$1" <<'PY'
+import re, sys
+bad = re.compile(r"[ᄀ-ᇿ぀-ヿ㄰-㆏㐀-䶿一-鿿가-힣]")
+hits = []
+for n, line in enumerate(open(sys.argv[1], encoding="utf-8", errors="replace"), 1):
+    if line.startswith("# ------------------------ >8"):
+        break
+    if line.startswith("#"):
+        continue
+    if bad.search(line):
+        hits.append(f"  {n}: {line.rstrip()}")
+if hits:
+    print("commit-msg: commit messages are English — rewrite these lines (quote meaning, not Korean text):", file=sys.stderr)
+    print("\n".join(hits[:8]), file=sys.stderr)
+    print("  (one-off override: COMMIT_MSG_ALLOW_NON_ENGLISH=1 git commit ...)", file=sys.stderr)
+    sys.exit(1)
+PY
