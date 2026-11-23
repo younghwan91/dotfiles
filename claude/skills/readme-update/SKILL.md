@@ -13,6 +13,8 @@ Do the whole job without asking for each step. Ask only when a choice genuinely 
 
 `README.md` is written in the language of the people expected to use the project most — decide it yourself from what the project is for, don't ask. A tool for Korean markets, Korean public data or Korean-speaking teams gets a Korean `README.md`; a general developer library or CLI gets English. Other languages go in `README.<lang>.md` (`README.en.md`, `README.ko.md`) with the same structure, linked from the hero's link row. If the current main language is the wrong one, swap the files (and fix links and tests that name them) as part of the job.
 
+The repo's **About** (GitHub description) is in the same language as `README.md`: one line, the tagline or a short form of it, with no second-language tail ("… · Daily KOSPI map & report"). Set the website field to the demo or docs URL if there is one. Topics stay as they are — GitHub only allows lowercase ASCII there. Apply it with `gh repo edit OWNER/REPO --description "…" --homepage "…"` once the README change is merged, and report the before/after.
+
 ## 1. Measure and read
 
 ```bash
