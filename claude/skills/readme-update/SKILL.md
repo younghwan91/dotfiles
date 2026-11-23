@@ -64,6 +64,10 @@ Use the skeleton in `references/patterns.md` and write in the manner of `referen
 
 Keep the tagline identical to wherever the repo treats it as canonical (brand guide, repo description). Mirror the same structure in other-language READMEs (`README.en.md`, `README.ko.md`, …) and keep their Quick start commands identical to the main one.
 
+### Korean prose: polish with humanize-korean
+
+If the README (or `README.ko.md`) is Korean and the `humanize-korean` skill is installed (`~/.claude/skills/humanize-korean`, from epoko77-ai/im-not-ai), run it on the Korean prose you wrote — the hero line, captions, bullets and short paragraphs. It removes translationese, stiff nominalisation, mechanical parallelism and other AI tells without changing content. Keep these out of its reach or restore them afterwards: code blocks and commands, links and paths, headings that other files link to, the tagline when a brand guide fixes it, and any wording the repo requires (notices, banned-word rules). Then diff the result against your draft and keep only changes that read better and say the same thing. If the skill is not installed, apply the same ideas yourself: short sentences, plain verbs, no "~하는 것이 가능하다"-style nominalisation, no "다양한·혁신적인" filler.
+
 ## 5. Repoint references and tests
 
 Using the list from step 2:
