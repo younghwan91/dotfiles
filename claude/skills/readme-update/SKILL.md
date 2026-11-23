@@ -1,6 +1,6 @@
 ---
 name: readme-update
-description: Rewrite a repository README into the shape today's trending GitHub repos use — centered hero (logo, one-line pitch, badges, link row), demo picture, a Quick start that runs, a few lines of what it does, and a docs table — and move the long material, word for word, into docs/ so nothing is lost. Use this whenever someone says the README is too long, messy, outdated or hard to read, or asks to clean up, tidy, refresh, restructure, rewrite or "make it like popular repos" — including short Korean asks like "리드미 정리", "리드미 업데이트", "README 너무 길다", "리드미 다듬어", "트렌딩 레포처럼". Also use it after big features land and the README no longer matches the project. It does the whole job by itself: measure, plan, move, relink, fix references and tests, verify.
+description: Rewrite a repository README into the shape, voice and layout today's trending GitHub repos use — centered hero (logo, one-line pitch, badges, link row), demo picture, a Quick start that runs, a few lines of what it does, and a docs table — and move the long material, word for word, into docs/ so nothing is lost. Use this whenever someone says the README is too long, messy, outdated or hard to read, or asks to clean up, tidy, refresh, restructure, rewrite or "make it like popular repos" — including short Korean asks like "리드미 정리", "리드미 업데이트", "README 너무 길다", "리드미 다듬어", "트렌딩 레포처럼". Also use it after big features land and the README no longer matches the project. It does the whole job by itself: measure, plan, move, relink, fix references and tests, verify.
 ---
 
 # README update
@@ -15,7 +15,7 @@ Do the whole job without asking for each step. Ask only when a choice genuinely 
 python3 <skill>/scripts/readme_stats.py README.md [README.*.md]
 ```
 
-It prints lines, `##` count, images, badges and code blocks. Compare against `references/patterns.md` (what trending READMEs look like, with numbers). Targets: **about 80–150 lines, 6–10 `##` sections**; above ~300 lines something is in the wrong place.
+It prints lines, `##` count, images, badges and code blocks. Compare against `references/patterns.md` (structure and length of trending READMEs) and `references/style.md` (their voice, typography and layout, measured). To re-measure the trend on fresh samples, put README files in a folder and run `scripts/readme_nature.py <folder>`. Targets: **about 80–150 lines, 6–10 `##` sections**; above ~300 lines something is in the wrong place.
 
 Then read the README top to bottom as a first-time visitor and note, per section: *does a first-time reader need this on the front page?* Typical answers:
 - Keep (shortened): what it is, demo, quick start, what you get, how to use your own data / install, the one or two caveats that change how results are read, license, how to contribute or support.
@@ -46,7 +46,7 @@ python3 <skill>/scripts/move_sections.py --readme README.md --out docs/guide.md 
 
 ## 4. Write the new README
 
-Use the skeleton in `references/patterns.md` and fill it from what the project already says — do not invent claims, numbers, features or badges. In short:
+Use the skeleton in `references/patterns.md` and write in the manner of `references/style.md` — talk to the reader, short sentences, a bold noun-phrase tagline, bold-led bullets, code in backticks, no hype words or exclamation marks, a picture in the first screen. Fill it from what the project already says — do not invent claims, numbers, features or badges. In short:
 
 1. **Hero** (centered `<div align="center">`): logo if the repo has one, `# name`, one bold sentence that says what it does for whom, one plain line of context, 2–4 badges that work for anonymous visitors (release, language version, license; no CI badge for private repos), a link row (demo · docs · install/own data · other languages · sponsor).
 2. **Demo picture** right under the hero — the best existing GIF/screenshot; caption in small text. Respect rules about synthetic/demo-only images.

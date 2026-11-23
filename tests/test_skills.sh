@@ -52,6 +52,8 @@ echo '[x](#nowhere)' >> "$T/docs/guide.md"
 if ! python3 "$S/check_links.py" "$T/docs/guide.md" >/dev/null; then ok; else no check_links_catches_dangling_anchor; fi
 if python3 "$S/readme_stats.py" "$T/README.md" | grep -q 'README.md'; then ok; else no readme_stats_runs; fi
 if bash "$S/find_readme_refs.sh" "$T" >/dev/null; then ok; else no find_refs_runs; fi
+mkdir -p "$T/samples"; cp "$T/README.md" "$T/samples/a.md"
+if python3 "$S/readme_nature.py" "$T/samples" | grep -q "레이아웃"; then ok; else no readme_nature_runs; fi
 
 echo "test_skills: $pass/$((pass + fail)) pass"
 [ "$fail" -eq 0 ]
