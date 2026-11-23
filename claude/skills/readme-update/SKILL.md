@@ -68,6 +68,12 @@ Keep the tagline identical to wherever the repo treats it as canonical (brand gu
 
 If the README (or `README.ko.md`) is Korean and the `humanize-korean` skill is installed (`~/.claude/skills/humanize-korean`, from epoko77-ai/im-not-ai), run it on the Korean prose you wrote — the hero line, captions, bullets and short paragraphs. It removes translationese, stiff nominalisation, mechanical parallelism and other AI tells without changing content. Keep these out of its reach or restore them afterwards: code blocks and commands, links and paths, headings that other files link to, the tagline when a brand guide fixes it, and any wording the repo requires (notices, banned-word rules). Then diff the result against your draft and keep only changes that read better and say the same thing. If the skill is not installed, apply the same ideas yourself: short sentences, plain verbs, no "~하는 것이 가능하다"-style nominalisation, no "다양한·혁신적인" filler.
 
+humanize-korean misses two things; check them yourself:
+- **Word-for-word calques of English product phrases.** "Bring your own key" became "자기 키로 시작하기" and "your own data" became "자기 데이터로 보기" — the reader cannot tell whose key or which key. Read every link label, heading, button and caption aloud and name the thing: "증권사 키로 시작하기", "내 데이터로 보기", "각자의 컴퓨터에서". Fix the same phrase wherever readers meet it (landing page, docs titles, notices, issue templates), not only in the README; leave dated plans and specs as written.
+- **Its own summary block.** The output file ends with a `<!-- HUMANIZE-SUMMARY ... -->` comment; cut from that marker before copying the text back into the README.
+
+Do not force English into Korean either: names, commands, flags, file names, `Quick start`-style headings the repo already uses, and terms readers know in English (API, BYO, CLI) stay as they are.
+
 ## 5. Repoint references and tests
 
 Using the list from step 2:
@@ -90,3 +96,5 @@ python3 <skill>/scripts/verify_moved.py --before <(git show HEAD:README.md) --af
 ```
 
 It confirms every non-empty line of the old README still exists somewhere (README or the docs you moved to) and lists the ones that don't, so intended rewrites are visible and accidental losses are caught. Then run the repo's own tests and linters. Report before/after line counts, where each moved section went, and anything the owner must do by hand (e.g. upload a social preview). Ship through the repo's normal flow (branch → PR, or whatever its rules say).
+
+Commit messages, PR titles and PR bodies are English (Conventional Commits, the why in the body) even when the README is Korean — describe the Korean change in English instead of quoting it. If the repo's `CLAUDE.md` asks for Korean commit messages, change that line in the same PR. Before pushing, check: `git log --format=%B origin/main..HEAD | grep -P '[\x{AC00}-\x{D7A3}]'` must print nothing, and the same for the PR title and body.
