@@ -17,8 +17,6 @@ Do the whole job without asking for each step. Ask only when a choice genuinely 
 
 The repo's **About** (GitHub description) is in the same language as `README.md`: one line, the tagline or a short form of it, with no second-language tail ("… · Daily KOSPI map & report"). Set the website field to the demo or docs URL if there is one. Topics stay as they are — GitHub only allows lowercase ASCII there. Apply it with `gh repo edit OWNER/REPO --description "…" --homepage "…"` once the README change is merged, and report the before/after.
 
-The repo's **About** (GitHub description) is in the same language as `README.md`: one line, the tagline or a short form of it, with no second-language tail ("… · Daily KOSPI map & report"). Set the website field to the demo or docs URL if there is one. Topics stay as they are — GitHub only allows lowercase ASCII there. Apply it with `gh repo edit OWNER/REPO --description "…" --homepage "…"` once the README change is merged, and report the before/after.
-
 ## 1. Measure and read
 
 ```bash
