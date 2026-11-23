@@ -73,3 +73,46 @@ If the repo has a wording rule (banned words, "no advice", required notices), it
 5. "Quick start" with one tagged code block.
 
 Everything else follows, in short sections with bold-led bullets, then a docs table and a community/license footer.
+
+## Images — where they live and how they are written
+
+Measured on the same 28 READMEs (`scripts/readme_assets.py <folder>` re-measures).
+
+| Trait | Measure | Rule of thumb |
+|---|---|---|
+| Where images live | repo-relative **183** · other sites **52** · `raw.githubusercontent` **17** · GitHub drag-and-drop uploads (`user-attachments`) **11** (badges excluded) | Commit images to the repo (`docs/images/`, `.github/assets/`, `assets/`) and link them relatively. Use an absolute `raw.githubusercontent.com/OWNER/REPO/main/…` URL only when the README is also shown off GitHub (PyPI, npm, a docs site). Drag-and-drop uploads are for one-off screenshots and videos — they are not versioned with the code. |
+| Formats | png **99** · svg **84** · webp **38** · jpg **25** · gif **6** | SVG for logos, diagrams and charts (crisp, small, can have a dark variant). PNG/WebP for screenshots — WebP when size matters. GIFs are rare; prefer a short MP4 uploaded to GitHub or an animated WebP, and keep any GIF small. |
+| Alt text | **224/243** images have it | Always write alt text that says what the picture shows, not "screenshot". |
+| Size | `width` set on **142** `<img>` | Set `width` (or `height` for logos) so a large asset does not take over the page; use `width="49%"` pairs for side by side. |
+| Dark mode | **12/28** use `<picture>` with `prefers-color-scheme` | Give logos and diagrams a dark variant when the repo has one; screenshots can stay single. |
+| Linked images | common (badges, deploy buttons, the logo) | Wrap a badge or button in the link it describes; don't link screenshots to themselves. |
+
+## Branding
+
+| Trait | Measure | Rule of thumb |
+|---|---|---|
+| Logo or banner at the top | **21/28** | Use the repo's logo if it has one; do not invent one. |
+| Name as real heading text | **23/28** have `# Name` or `<h1>` | Keep the name as text even when there is a logo or banner — it is searchable, copyable and read by screen readers. |
+| Full-width banner image | **4/28** | Rare; a logo plus text heading is the norm. |
+| Bold tagline near the top | **11/28** | One bold sentence under the name (see Voice). |
+| Social / community links in the hero | **12/28** | Add only channels that exist (Discord, X, site). |
+| Language switcher in the hero | **9/28** | One line: `English · 한국어 · 日本語` linking to `README.<lang>.md`. |
+| Brand-asset note | Handy, Sure: "the name and logo are not open source" / trademark lines | If the owner wants the name and logo protected while the code is open, say so in one line near the license. Ask the owner — don't add it on your own. |
+
+Keep name, tagline, logo and colors identical across README, docs site, social preview and package metadata; if the repo has a brand guide, it is the source.
+
+## Footer — how READMEs end
+
+| Trait | Measure | Rule of thumb |
+|---|---|---|
+| License is the last section | **18/28** have it among the last three `##`; **16/28** end on a license line | End with `## License` — one line: the license name and a link to `LICENSE`. |
+| Acknowledgments | **13/28** | A short bullet list of the projects and people you build on, when there are some. |
+| Community links in the tail | **13/28** | Issues, discussions or chat, one line each. |
+| Trademark / security notes | **8/28** | One line each, linking `SECURITY.md` or the trademark policy. |
+| Star-history chart | **8/28** | Only for repos with an audience; skip for new or private ones. |
+| Contributors image (contrib.rocks, all-contributors) | **4/28** | Use when outside contributors exist. |
+| Sponsors in the tail | **5/28** | One line with the Sponsors link; perks, if any, stated plainly. |
+| "Made by / Built with" line | **4/28** | Optional, small, last. |
+| Back-to-top link, citation block | 1/28 each | Rare; add a citation only for research software. |
+
+A typical ending: **Docs → Contributing / Community → Acknowledgments → License** — a few lines each, nothing after the license except an optional small "made by" line.

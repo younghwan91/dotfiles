@@ -15,7 +15,7 @@ Do the whole job without asking for each step. Ask only when a choice genuinely 
 python3 <skill>/scripts/readme_stats.py README.md [README.*.md]
 ```
 
-It prints lines, `##` count, images, badges and code blocks. Compare against `references/patterns.md` (structure and length of trending READMEs) and `references/style.md` (their voice, typography and layout, measured). To re-measure the trend on fresh samples, put README files in a folder and run `scripts/readme_nature.py <folder>`. Length target (one number everywhere): **aim for 80–150 lines; up to 250 is fine when the extra lines are pictures, a features table or install variants; above 250 move more out.** 6–10 `##` sections.
+It prints lines, `##` count, images, badges and code blocks. Compare against `references/patterns.md` (structure and length of trending READMEs) and `references/style.md` (their voice, typography and layout, measured). To re-measure the trend on fresh samples, put README files in a folder and run `scripts/readme_nature.py <folder>` (voice, typography, layout) and `scripts/readme_assets.py <folder>` (images, branding, footer). Length target (one number everywhere): **aim for 80–150 lines; up to 250 is fine when the extra lines are pictures, a features table or install variants; above 250 move more out.** 6–10 `##` sections.
 
 Then read the README top to bottom as a first-time visitor and note, per section: *does a first-time reader need this on the front page?* Typical answers:
 - Keep (shortened): what it is, demo, quick start, what you get, how to use your own data / install, the one or two caveats that change how results are read, license, how to contribute or support.
@@ -51,7 +51,7 @@ python3 <skill>/scripts/move_sections.py --readme README.md --out docs/guide.md 
 
 ## 4. Write the new README
 
-Use the skeleton in `references/patterns.md` and write in the manner of `references/style.md` — talk to the reader, short sentences, a bold noun-phrase tagline, bold-led bullets, code in backticks, no hype words or exclamation marks, a picture in the first screen. Fill it from what the project already says — do not invent claims, numbers, features or badges. In short:
+Use the skeleton in `references/patterns.md` and write in the manner of `references/style.md` — talk to the reader, short sentences, a bold noun-phrase tagline, bold-led bullets, code in backticks, no hype words or exclamation marks, a picture in the first screen. For pictures, branding and the ending follow the Images, Branding and Footer sections of `references/style.md`: images committed to the repo and linked relatively, SVG for logos and charts, alt text and a `width` on every image, the name kept as heading text next to the logo, and a footer that ends on a one-line `## License`. Fill it from what the project already says — do not invent claims, numbers, features or badges. In short:
 
 1. **Hero** (centered `<div align="center">`, or the repo's existing hero block): logo if the repo has one, `# name`, one bold sentence that says what it does for whom, one plain line of context, 0–4 badges that are true and work for anonymous visitors — a release badge only if a release exists, license only if a LICENSE file exists, no CI badge for private repos; zero badges is fine — and a link row (demo · docs · install/own data · other languages · sponsor).
 2. **Demo picture** right under the hero — the best existing GIF/screenshot; caption in small text. Respect rules about synthetic/demo-only images.
