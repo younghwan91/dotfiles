@@ -20,7 +20,7 @@ When the user types `/graphify`, use the installed graphify skill or instruction
 ## Safety
 - **The guard hook** (`~/.claude/hooks/guard.py`) blocks reading or printing secrets and irreversible commands. When it blocks, don't work around it: use the alternative in its message, or ask the user to run the command with `! <command>`.
 - **Secrets**: load `.env` and credentials, never view them — `set -a; . ./.env; set +a`, unless the repo's CLAUDE.md names another loader. Check a variable exists with `[ -n "$VAR" ] && echo set`.
-- **Commit messages are in English**, Conventional Commits (`fix(scope): …`), with the why in the body. This overrides any repo `CLAUDE.md` that asks for Korean commit messages; when you next work in such a repo, change its line to match. Answering the user stays in Korean.
+- **Commit messages are in English**, Conventional Commits (`fix(scope): …`), with the why in the body. The global `commit-msg` hook rejects Hangul in messages. This overrides any repo `CLAUDE.md` that asks for Korean commit messages; when you next work in such a repo, change its line to match. Answering the user stays in Korean.
 - **Commit identity**: never override it (`git -c user.email=…`, `GIT_AUTHOR_*`) — use the repo's config; the global pre-commit hook enforces an allowlist. Agents appear only via `Co-Authored-By`.
 - **Deletions**: if the user named the target, delete it without asking again. Confirm right before deleting only when the target is ambiguous or you widened the scope yourself (e.g. "and also these related files").
 - **sudo** needs a password → ask the user to run `! sudo …`.
