@@ -61,6 +61,7 @@ sed -i 's/^MIT$/Apache/' "$T/README.md"
 if ! python3 "$S/verify_moved.py" --before "$T/old.md" --after "$T/README.md" "$T/docs" >/dev/null; then ok; else no verify_moved_flags_lost_line; fi
 mkdir -p "$T/samples"; cp "$T/README.md" "$T/samples/a.md"
 if python3 "$S/readme_nature.py" "$T/samples" | grep -q "레이아웃"; then ok; else no readme_nature_runs; fi
+if python3 "$S/readme_assets.py" "$T/samples" | grep -q "푸터"; then ok; else no readme_assets_runs; fi
 
 echo "test_skills: $pass/$((pass + fail)) pass"
 [ "$fail" -eq 0 ]
