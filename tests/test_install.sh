@@ -35,6 +35,11 @@ if inst --profile personal && points "$HOME/.config/git/allowed-emails" "$P/git/
 
 if inst --profile vanilla && [ "$(personal_links)" -eq 0 ]; then ok; else no switch_to_vanilla_removes_personal_links; fi
 
+fresh
+if inst --profile vanilla && points "$HOME/.agents/skills/readme-update" "$REPO/claude/skills/readme-update" \
+   && points "$HOME/.claude/skills/readme-update" "$REPO/claude/skills/readme-update" \
+   && [ -f "$HOME/.claude/skills/readme-update/SKILL.md" ]; then ok; else no skills_linked; fi
+
 fresh; inst; rc=$?
 if [ $rc -eq 2 ] && grep -q -- '--profile' "$HOME/out.txt"; then ok; else no "no_tty_no_profile (rc=$rc)"; fi
 

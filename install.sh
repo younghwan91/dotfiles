@@ -149,6 +149,15 @@ if [ -z "${INSTALL_SKIP_SERVICES:-}" ] && command -v $orca_cli >/dev/null; then
     | sed "s/^/  ${D}orca 스킬${R} /"
 fi
 
+# 이 레포의 스킬(claude/skills/<이름>/SKILL.md) — 실물은 ~/.agents/skills 에 링크하고(Codex·Gemini 등 Agent Skills 표준 도구가 읽는 자리),
+# Claude Code 는 ~/.claude/skills 에서 같은 폴더를 본다. Orca 스킬과 같은 배치다.
+for d in "$repo"/claude/skills/*/; do
+  [ -f "$d/SKILL.md" ] || continue
+  n=$(basename "$d")
+  link "claude/skills/$n" "$HOME/.agents/skills/$n"
+  link "claude/skills/$n" "$HOME/.claude/skills/$n"
+done
+
 # ---- macOS ----
 if [ "$os" = darwin ]; then
   link macos/karabiner.json          ~/.config/karabiner/karabiner.json
