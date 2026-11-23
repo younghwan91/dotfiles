@@ -48,6 +48,8 @@ jobs:
         run: bash tests/test_gh_protect.sh
       - name: ci-local light mode
         run: bash tests/test_ci_local_light.sh
+      - name: skills
+        run: bash tests/test_skills.sh
       - name: pull-all
         run: bash tests/test_pull_all.sh
       - name: check_no_personal self-test
