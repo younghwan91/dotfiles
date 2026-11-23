@@ -156,6 +156,8 @@ for d in "$repo"/claude/skills/*/; do
   n=$(basename "$d")
   link "claude/skills/$n" "$HOME/.agents/skills/$n"
   link "claude/skills/$n" "$HOME/.claude/skills/$n"
+  # Antigravity(Gemini) CLI 는 ~/.gemini/config/skills 만 읽는다 — 쓰는 머신에서만 같은 폴더를 건다.
+  [ -d "$HOME/.gemini" ] && link "claude/skills/$n" "$HOME/.gemini/config/skills/$n"
 done
 
 # 외부 스킬 — 한국어 윤문(epoko77-ai/im-not-ai, MIT). readme-update 가 한국어 README 를 다듬을 때 쓴다.
@@ -167,6 +169,13 @@ if [ -z "${INSTALL_SKIP_SERVICES:-}" ] && command -v git >/dev/null; then
     && git -C "$im_not_ai_dir" fetch -q origin 2>/dev/null; git -C "$im_not_ai_dir" checkout -q "$im_not_ai_sha" 2>/dev/null \
     && (cd "$im_not_ai_dir" && ./install.sh --claude-only >/dev/null 2>&1) \
     && echo "  ${G}→${R} humanize-korean @ $im_not_ai_sha" || echo "  ${Y}참고${R} humanize-korean 설치 실패 — 나중에 install.sh 를 다시"
+  # Claude 밖의 에이전트(Codex·Antigravity 등)는 upstream 의 범용 번들을 쓴다 — 같은 진단·윤문·마무리 역할 파일과
+  # 같은 스크립트·게이트로 light·standard·heavy 를 다 돈다(하위 에이전트가 없으면 역할을 순서대로 직접 실행).
+  hk="$im_not_ai_dir/codex/skills/humanize-korean"
+  if [ -f "$hk/SKILL.md" ]; then
+    link "$hk" "$HOME/.agents/skills/humanize-korean"
+    [ -d "$HOME/.gemini" ] && link "$hk" "$HOME/.gemini/config/skills/humanize-korean"
+  fi
 fi
 
 # ---- macOS ----

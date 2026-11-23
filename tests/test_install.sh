@@ -39,6 +39,10 @@ fresh
 if inst --profile vanilla && points "$HOME/.agents/skills/readme-update" "$REPO/claude/skills/readme-update" \
    && points "$HOME/.claude/skills/readme-update" "$REPO/claude/skills/readme-update" \
    && [ -f "$HOME/.claude/skills/readme-update/SKILL.md" ]; then ok; else no skills_linked; fi
+if [ ! -e "$HOME/.gemini" ]; then ok; else no no_gemini_dir_without_gemini; fi
+
+fresh; mkdir -p "$HOME/.gemini"
+if inst --profile vanilla && points "$HOME/.gemini/config/skills/readme-update" "$REPO/claude/skills/readme-update"; then ok; else no skills_linked_for_antigravity; fi
 
 fresh; inst; rc=$?
 if [ $rc -eq 2 ] && grep -q -- '--profile' "$HOME/out.txt"; then ok; else no "no_tty_no_profile (rc=$rc)"; fi
