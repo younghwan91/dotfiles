@@ -9,6 +9,9 @@ A README is the front door. People decide in the first screen whether to keep re
 
 Do the whole job without asking for each step. Ask only when a choice genuinely belongs to the owner (for example, two conflicting taglines). Treat the repo's own rules (`CLAUDE.md`, `AGENTS.md`, `CONTRIBUTING.md`, a brand guide, a wording/banned-words list, legal or data notices) as overriding the patterns here.
 
+## 0. Pick the main language
+
+`README.md` is written in the language of the people expected to use the project most — decide it yourself from what the project is for, don't ask. A tool for Korean markets, Korean public data or Korean-speaking teams gets a Korean `README.md`; a general developer library or CLI gets English. Other languages go in `README.<lang>.md` (`README.en.md`, `README.ko.md`) with the same structure, linked from the hero's link row. If the current main language is the wrong one, swap the files (and fix links and tests that name them) as part of the job.
 **Korean register.** Text a first-time reader meets — README, landing page, quick start, notices, the tagline and the About line — speaks to the reader in 합니다체 ("…한 장의 지도로 봅니다."), the norm in Korean open-source READMEs and developer docs. Plain "~다" reads like a report or memo: keep it for reference material (formulas, validation records, runbooks, long guides). If the repo's brand guide fixes "~다" for reader-facing text, change the guide in the same PR and say so; do not keep the wrong register just because a guide says it.
 
 ## 1. Measure and read
