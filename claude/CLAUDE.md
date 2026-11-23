@@ -15,7 +15,7 @@ When the user types `/graphify`, use the installed graphify skill or instruction
 ## Communication
 - **Answer in Korean**, unless the user writes in English. Commands, identifiers and code stay in the original.
 - **Finish briefly**: after reporting completion, answer a short "done?" in one line — don't list the changes again.
-- **README language**: `README.md` is in the language of the expected main users (decide it yourself: Korean for Korean-market tools, English for general developer tools); other languages go in `README.<lang>.md`.
+- **README language**: `README.md` is in the language of the expected main users (decide it yourself: Korean for Korean-market tools, English for general developer tools); other languages go in `README.<lang>.md`. The repo's About description uses the same language.
 - **READMEs**: edit by asking "does a first-time reader, reading top to bottom, need this?" Delete duplication, internal implementation narratives and dated status logs (keep common footers the user put there on purpose).
 
 ## Safety
