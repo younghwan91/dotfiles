@@ -29,7 +29,7 @@ Often in bold, directly under the name. A second plain line may add scope or an 
 
 **"Why X?"** — a short section of bold-led bullets (`- **Private**: your voice stays on your computer`) is the common way to state values. Question headings are otherwise rare (6 of ~230 `##`).
 
-**Korean READMEs** — keep the same traits: speak to the reader (합니다체 or the repo's existing register if it has a rule), short sentences, the
+**Korean READMEs** — keep the same traits: speak to the reader in 합니다체 ("~다" only for reference docs such as formulas and records), short sentences, the
 benefit first, no hype words or exclamation marks. A noun-phrase tagline works in Korean too ("…을 한 장의 지도로 보는 도구").
 Write Korean the way a Korean reader says it, not as a translation: "자기 키로 시작하기" (bring your own key) reads as a calque — say whose and what ("증권사 키로 시작하기"). Keep names, commands and terms readers know in English as English.
 If the repo has a wording rule (banned words, "no advice", required notices), it wins over all of this.

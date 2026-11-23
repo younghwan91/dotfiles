@@ -9,6 +9,8 @@ A README is the front door. People decide in the first screen whether to keep re
 
 Do the whole job without asking for each step. Ask only when a choice genuinely belongs to the owner (for example, two conflicting taglines). Treat the repo's own rules (`CLAUDE.md`, `AGENTS.md`, `CONTRIBUTING.md`, a brand guide, a wording/banned-words list, legal or data notices) as overriding the patterns here.
 
+**Korean register.** Text a first-time reader meets — README, landing page, quick start, notices, the tagline and the About line — speaks to the reader in 합니다체 ("…한 장의 지도로 봅니다."), the norm in Korean open-source READMEs and developer docs. Plain "~다" reads like a report or memo: keep it for reference material (formulas, validation records, runbooks, long guides). If the repo's brand guide fixes "~다" for reader-facing text, change the guide in the same PR and say so; do not keep the wrong register just because a guide says it.
+
 ## 1. Measure and read
 
 ```bash
@@ -22,7 +24,7 @@ Then read the README top to bottom as a first-time visitor and note, per section
 - Move to `docs/`: architecture and file trees, operations and schedules, every key and column explained, formulas and definitions, validation details, development and testing commands, comparison tables, long FAQs.
 - Delete only true duplication and dated status logs ("as of last Tuesday we…"). When in doubt, move instead of delete.
 
-**Keep what the brand already is.** If the README has a banner image, a custom `<p align="center">` block, a logo layout or an established register (e.g. Korean "~다" or "~합니다"), keep it and apply the patterns inside it — do not swap a working hero for the skeleton.
+**Keep what the brand already is.** If the README has a banner image, a custom `<p align="center">` block, a logo layout or an established register, keep it and apply the patterns inside it — do not swap a working hero for the skeleton.
 
 Also read the project rules files and any brand guide now — they may fix the tagline, required notices, words that must not appear, or which pictures may be public.
 
