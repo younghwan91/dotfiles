@@ -62,7 +62,7 @@ If the repo has a wording rule (banned words, "no advice", required notices), it
 | Side-by-side images | 7/26 | Two `<img width="49%">` in one centered `<p>` for before/after or two surfaces. |
 | GitHub alerts (`> [!NOTE]`) | rare | Use at most one, for the one thing that must not be missed. |
 | Horizontal rules | rare | Headings already separate sections. |
-| Length | median **257** lines (48–1002) | The best-reading ones are 80–250. |
+| Length | median **257** lines (48–1002) | Target 80–150, up to 250 with pictures or install variants (same target as SKILL.md). |
 
 ## Order of a first screen that works
 

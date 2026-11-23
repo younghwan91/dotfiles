@@ -17,7 +17,7 @@ Measured 2026-11-24 from GitHub trending (weekly, all languages and Python). `sc
 | dream-num/univer | 914 | 10 | 54 | 21 | 8 | |
 | jingyaogong/minimind | 2030 | 32 | 33 | 5 | 21 | outlier: tutorial-in-README |
 
-Median ≈ 250–320 lines, but the ones that read best are 80–250: they say what it is, show it, let you run it, and link out.
+Median ≈ 250–320 lines. Target: **80–150, up to 250** with pictures or install variants — the ones that read best say what it is, show it, let you run it, and link out.
 
 ## The common shape
 
