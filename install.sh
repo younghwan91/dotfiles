@@ -158,6 +158,17 @@ for d in "$repo"/claude/skills/*/; do
   link "claude/skills/$n" "$HOME/.claude/skills/$n"
 done
 
+# 외부 스킬 — 한국어 윤문(epoko77-ai/im-not-ai, MIT). readme-update 가 한국어 README 를 다듬을 때 쓴다.
+# 판을 고정한다(커밋 sha) — 남의 레포 머리가 바뀌어도 이 머신에 깔리는 코드는 읽고 고른 그 판이다. 올릴 때는 sha 를 바꾸는 PR 로.
+im_not_ai_sha=e9793d7
+im_not_ai_dir="$HOME/.local/share/agent-skills/im-not-ai"
+if [ -z "${INSTALL_SKIP_SERVICES:-}" ] && command -v git >/dev/null; then
+  { [ -d "$im_not_ai_dir/.git" ] || git clone -q https://github.com/epoko77-ai/im-not-ai "$im_not_ai_dir"; } \
+    && git -C "$im_not_ai_dir" fetch -q origin 2>/dev/null; git -C "$im_not_ai_dir" checkout -q "$im_not_ai_sha" 2>/dev/null \
+    && (cd "$im_not_ai_dir" && ./install.sh --claude-only >/dev/null 2>&1) \
+    && echo "  ${G}→${R} humanize-korean @ $im_not_ai_sha" || echo "  ${Y}참고${R} humanize-korean 설치 실패 — 나중에 install.sh 를 다시"
+fi
+
 # ---- macOS ----
 if [ "$os" = darwin ]; then
   link macos/karabiner.json          ~/.config/karabiner/karabiner.json
