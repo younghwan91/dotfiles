@@ -15,7 +15,7 @@ Symlinked on Unix and copied on Windows, with public defaults separated from pri
 ![CI](https://img.shields.io/badge/CI-GitHub%20Actions-2088FF?logo=github-actions&logoColor=white)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-[Quick start](#quick-start) · [Guide](docs/guide.md) · [Ubuntu manual](setup/MANUAL.md) · [한국어](README.ko.md)
+[Quick start](#quick-start) · [Claude Code only](#take-only-the-claude-code-config) · [Guide](docs/guide.md) · [Ubuntu manual](setup/MANUAL.md) · [한국어](README.ko.md)
 
 </div>
 
@@ -42,6 +42,57 @@ On a fresh machine, run the OS setup script first:
 | Windows | `pwsh -File windows\setup.ps1` | `winget import` from `windows/winget-packages.json`, `windows/install.ps1` |
 
 Browser logins (GitHub, SSH keys, Google Drive, Claude Code) are documented in [setup/MANUAL.md](setup/MANUAL.md).
+
+## Take only the Claude Code config
+
+You do not need the shell, Git, or Vim parts. The Claude Code pieces are self-contained:
+
+| Piece | File | What it does |
+|---|---|---|
+| Guard hook | [`claude/hooks/guard.py`](claude/hooks/guard.py) | `PreToolUse` hook that denies secret reads (`.env`, SSH keys, credentials), force-push, destructive deletes and similar, even under `--dangerously-skip-permissions`. It tells Claude the safe alternative, so it routes around the block instead of stalling. Tests: `claude/hooks/test_guard.py` |
+| Status line | [`claude/hud/statusline.sh`](claude/hud/statusline.sh) | CPU/memory HUD for the Claude Code status line (needs `jq`) |
+| Skills | [`claude/skills/`](claude/skills) | Skills in the standard `SKILL.md` layout (currently `readme-update`) |
+
+```bash
+git clone --depth 1 https://github.com/younghwan91/dotfiles /tmp/dotfiles
+mkdir -p ~/.claude/hooks ~/.claude/skills
+cp /tmp/dotfiles/claude/hooks/guard.py ~/.claude/hooks/
+cp -r /tmp/dotfiles/claude/skills/readme-update ~/.claude/skills/      # optional
+```
+
+Then register the hook by merging this into `~/.claude/settings.json` (keep your other keys). The `[ -f ... ]` check makes it fail open if the file is ever missing:
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [{
+      "matcher": "Bash|Read|Edit|Write|MultiEdit|NotebookEdit|Grep",
+      "hooks": [{
+        "type": "command",
+        "timeout": 10,
+        "command": "[ -f \"$HOME/.claude/hooks/guard.py\" ] && python3 \"$HOME/.claude/hooks/guard.py\"; exit 0"
+      }]
+    }]
+  }
+}
+```
+
+Copy rather than symlink if you do not want to keep the clone. The guard is tuned to the author's workflow (for example, it blocks switching branches in `~/git/<repo>` checkouts that cron runs), so read `guard.py` and trim what does not fit. Details are in [docs/guide.md](docs/guide.md#claude-code-guard).
+
+### Try it in a throwaway container
+
+`install.sh` has no dry-run flag, and it rewrites `~`. Run it in a container instead, with `INSTALL_SKIP_SERVICES=1` to skip service and network steps. Nothing touches your host:
+
+```bash
+docker run --rm ubuntu:24.04 bash -c '
+  apt-get update -qq && apt-get install -y -qq git python3 ca-certificates >/dev/null
+  git clone -q --depth 1 https://github.com/younghwan91/dotfiles /dotfiles
+  INSTALL_SKIP_SERVICES=1 /dotfiles/install.sh --profile vanilla </dev/null
+  cat ~/.claude/settings.json'
+echo '{"tool_name":"Bash","tool_input":{"command":"cat .env"},"cwd":"/tmp"}' | python3 claude/hooks/guard.py   # prints a deny with the safe alternative
+```
+
+The `vanilla` profile installs public defaults only. `personal/` is a separate private repo and is never part of this one.
 
 ## What's inside
 
@@ -74,6 +125,12 @@ No secrets live in this repository. Put API keys, tokens, and host-specific sett
 - **PR workflow**: Open a branch and submit a PR (`main` accepts changes via PR only).
 - **Commit messages**: Use English Conventional Commits (`feat(install): ...`, `docs(readme): ...`).
 - **Checks**: Run `python3 tests/check_no_personal.py` before committing; `pre-push` runs `.github/workflows/ci.yml` locally via `ci-local.py`.
+
+## Tools by the same author
+
+- [kiwoom-client](https://github.com/younghwan91/kiwoom-client): unofficial Kiwoom REST API client for Python and AI agents (182 endpoints, real-time WebSocket, MCP server).
+- [fin-checkup](https://github.com/younghwan91/fin-checkup): reads Korean listed companies' financial statements as traffic lights, with formulas and thresholds. Measurements only, no investment advice.
+- [kiwoom-order-guard](https://github.com/younghwan91/kiwoom-order-guard): a Claude Code hook that inspects orders an AI agent sends through Kiwoom's official MCP/plugin before they go out.
 
 ## License
 
