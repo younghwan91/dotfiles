@@ -15,7 +15,7 @@ Unix에서는 심볼릭 링크로, Windows에서는 복사로 연결하며 공�
 ![CI](https://img.shields.io/badge/CI-GitHub%20Actions-2088FF?logo=github-actions&logoColor=white)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-[빠른 시작](#빠른-시작) · [가이드](docs/guide.ko.md) · [Ubuntu 수동 설정](setup/MANUAL.md) · [English](README.md)
+[빠른 시작](#빠른-시작) · [Claude Code만 쓰기](#claude-code-설정만-가져가기) · [가이드](docs/guide.ko.md) · [Ubuntu 수동 설정](setup/MANUAL.md) · [English](README.md)
 
 </div>
 
@@ -42,6 +42,57 @@ gh repo clone <owner>/dotfiles ~/git/dotfiles
 | Windows | `pwsh -File windows\setup.ps1` | `windows/winget-packages.json` 기반 `winget import`, `windows/install.ps1` |
 
 브라우저 로그인이 필요한 단계(GitHub, SSH 키, Google Drive, Claude Code)는 [setup/MANUAL.md](setup/MANUAL.md)에서 안내합니다.
+
+## Claude Code 설정만 가져가기
+
+셸, Git, Vim 설정은 필요 없어도 됩니다. Claude Code 관련 파일은 따로 떼어 쓸 수 있습니다.
+
+| 구성 | 파일 | 역할 |
+|---|---|---|
+| 가드 훅 | [`claude/hooks/guard.py`](claude/hooks/guard.py) | `PreToolUse` 훅입니다. `--dangerously-skip-permissions`에서도 비밀값 열람(`.env`, SSH 키, 자격 증명), force-push, 되돌릴 수 없는 삭제 등을 막습니다. 막을 때 안전한 대안을 함께 알려 주므로 Claude가 멈추지 않고 우회로를 찾습니다. 테스트: `claude/hooks/test_guard.py` |
+| 상태줄 | [`claude/hud/statusline.sh`](claude/hud/statusline.sh) | Claude Code 상태줄에 CPU·메모리를 표시합니다(`jq` 필요) |
+| 스킬 | [`claude/skills/`](claude/skills) | 표준 `SKILL.md` 구조의 스킬입니다(현재 `readme-update`) |
+
+```bash
+git clone --depth 1 https://github.com/younghwan91/dotfiles /tmp/dotfiles
+mkdir -p ~/.claude/hooks ~/.claude/skills
+cp /tmp/dotfiles/claude/hooks/guard.py ~/.claude/hooks/
+cp -r /tmp/dotfiles/claude/skills/readme-update ~/.claude/skills/      # 선택
+```
+
+그다음 `~/.claude/settings.json`에 아래 내용을 병합해 훅을 등록합니다(다른 키는 그대로 둡니다). `[ -f ... ]` 검사 덕분에 파일이 없어져도 모든 도구를 막지 않고 통과합니다.
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [{
+      "matcher": "Bash|Read|Edit|Write|MultiEdit|NotebookEdit|Grep",
+      "hooks": [{
+        "type": "command",
+        "timeout": 10,
+        "command": "[ -f \"$HOME/.claude/hooks/guard.py\" ] && python3 \"$HOME/.claude/hooks/guard.py\"; exit 0"
+      }]
+    }]
+  }
+}
+```
+
+클론을 남기고 싶지 않다면 심볼릭 링크 대신 복사하면 됩니다. 가드는 작성자의 작업 방식에 맞춰져 있습니다(예: 크론이 쓰는 `~/git/<repo>` 체크아웃에서 브랜치 전환을 막습니다). `guard.py`를 읽어 보고 맞지 않는 규칙은 지워서 쓰십시오. 자세한 내용은 [docs/guide.md](docs/guide.md#claude-code-guard)에 있습니다.
+
+### 일회용 컨테이너에서 먼저 써 보기
+
+`install.sh`에는 dry-run 옵션이 없고 `~`를 직접 고칩니다. 그러니 컨테이너에서 실행하고, `INSTALL_SKIP_SERVICES=1`로 서비스·네트워크 단계를 건너뜁니다. 호스트는 건드리지 않습니다.
+
+```bash
+docker run --rm ubuntu:24.04 bash -c '
+  apt-get update -qq && apt-get install -y -qq git python3 ca-certificates >/dev/null
+  git clone -q --depth 1 https://github.com/younghwan91/dotfiles /dotfiles
+  INSTALL_SKIP_SERVICES=1 /dotfiles/install.sh --profile vanilla </dev/null
+  cat ~/.claude/settings.json'
+echo '{"tool_name":"Bash","tool_input":{"command":"cat .env"},"cwd":"/tmp"}' | python3 claude/hooks/guard.py   # 안전한 대안과 함께 deny를 출력합니다
+```
+
+`vanilla` 프로필은 공개 기본값만 설치합니다. `personal/`은 이 레포와 별개의 비공개 레포이며 여기에 포함되지 않습니다.
 
 ## 주요 기능
 
@@ -74,6 +125,12 @@ zsh/zshrc               모든 OS
 - **PR 워크플로우**: 브랜치를 만들어 PR로 변경 사항을 제출합니다(`main` 브랜치에는 직접 push할 수 없습니다).
 - **커밋 메시지**: 영문 Conventional Commits 형식(`feat(install): ...`, `docs(readme): ...`)을 사용합니다.
 - **사전 검사**: 커밋 전 `python3 tests/check_no_personal.py`를 실행하며, `pre-push` 훅이 `ci-local.py`로 `.github/workflows/ci.yml`을 로컬에서 검증합니다.
+
+## 같은 저자의 도구
+
+- [kiwoom-client](https://github.com/younghwan91/kiwoom-client): 키움 REST API를 파이썬과 AI 에이전트로 쓰는 비공식 클라이언트(엔드포인트 182개, 실시간 WebSocket, MCP 서버)입니다.
+- [fin-checkup](https://github.com/younghwan91/fin-checkup): 상장사 재무제표를 신호등으로 읽어 줍니다. 계산식과 경계값을 함께 보여 주며 측정값만 다루고 투자 권유는 하지 않습니다.
+- [kiwoom-order-guard](https://github.com/younghwan91/kiwoom-order-guard): AI 에이전트가 키움 공식 MCP·플러그인으로 내는 주문을 전송 전에 검사하는 Claude Code 훅입니다.
 
 ## 라이선스
 
