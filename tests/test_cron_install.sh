@@ -40,3 +40,19 @@ elif [ "$before" != "$(cat "$FAKE_CRONTAB")" ] || ! grep -q "broken" "$T/out.txt
 else
   echo "test_cron_install: rejects bad line pass"
 fi
+
+rm -rf "$T/git/broken"  # 위 테스트가 둔 잘못된 줄
+# --drop-dead: 울타리 밖 줄 중 없는 경로를 가리키는 줄과 바로 위 주석만 지운다 — 관리 블록·산 줄·출력 파일은 그대로
+mkdir -p "$T/alive"; : > "$T/alive/run.sh"
+{ echo "# keep this header"; echo; echo "# about the dead job"; echo "# second comment line"; echo "30 16 * * 1-5 $T/gone/collect.sh"; echo;
+  echo "30 12 * * * cd $T/renamed && node watch.js >> data/w.log 2>&1 # watch"; echo "0 1 * * * $T/alive/run.sh >> $T/nolog/x.log 2>&1"; cat "$FAKE_CRONTAB"; } > "$T/c" && mv "$T/c" "$FAKE_CRONTAB"
+blocks_before=$(grep -c '^# >>> managed' "$FAKE_CRONTAB")
+PATH="$T/bin:$PATH" python3 "$REPO/bin/cron-install" --drop-dead --diff > "$T/out.txt" 2>&1
+if ! grep -q 'collect.sh' "$FAKE_CRONTAB"; then echo "FAIL drop_dead_diff_changed_crontab"; exit 1; fi
+PATH="$T/bin:$PATH" python3 "$REPO/bin/cron-install" --drop-dead > "$T/out.txt" 2>&1
+if grep -qE 'collect.sh|about the dead job|second comment|renamed' "$FAKE_CRONTAB" || ! grep -q 'keep this header' "$FAKE_CRONTAB" \
+   || ! grep -q "$T/alive/run.sh" "$FAKE_CRONTAB" || [ "$(grep -c '^# >>> managed' "$FAKE_CRONTAB")" != "$blocks_before" ] \
+   || [ "$(grep -c '관리 밖 줄 지움' "$T/out.txt")" != 2 ]; then
+  echo "FAIL cron_install_drop_dead"; sed 's/^/    /' "$T/out.txt" "$FAKE_CRONTAB" | head -30; exit 1
+fi
+echo "test_cron_install: drop-dead pass"
