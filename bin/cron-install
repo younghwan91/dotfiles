@@ -4,6 +4,7 @@
     cron-install              # 설치 (먼저 현재 crontab 을 백업)
     cron-install --diff       # 바뀔 내용만 보여 주고 설치하지 않음
     cron-install --prune      # 레포 폴더가 없어진 블록도 지움
+    cron-install --drop-dead  # 울타리 밖 줄 중 없는 폴더·스크립트를 가리키는 줄(과 바로 위 주석)을 지움
 
 레포마다 울타리 친 블록 하나씩을 쓰고, 울타리 밖(thermal-tick 같은 손으로 적은 줄)은
 그대로 둔다:
@@ -33,6 +34,7 @@ from __future__ import annotations
 import difflib
 import os
 import re
+import shlex
 import socket
 import subprocess
 import sys
@@ -82,6 +84,47 @@ DAYS = "sun|mon|tue|wed|thu|fri|sat"
 RANGES = {0: (0, 59), 1: (0, 23), 2: (1, 31), 3: (1, 12), 4: (0, 7)}  # 분 시 일 월 요일(0·7 = 일)
 
 
+def dead_path(cmd_line: str) -> str | None:
+    """명령이 cd 하거나 실행하는 절대 경로 중 없는 것 하나. 출력 파일(>, >>)·mkdir 인자·VAR= 값은 실행이 만들므로 뺀다.
+    repos-doctor 의 crontab 점검과 같은 규칙이다."""
+    parts = cmd_line.split(None, 5)
+    cmd = parts[5] if len(parts) == 6 and not parts[0].startswith("@") else cmd_line.split(None, 1)[-1]
+    try:
+        toks = shlex.split(cmd, comments=True)
+    except ValueError:
+        return None
+    skip = False
+    for i, t in enumerate(toks):
+        if skip:
+            skip = False
+            continue
+        if t in (">", ">>", "2>", "2>>", "&>", "<"):
+            skip = True
+            continue
+        if t.startswith(("/", "~/")) and (i == 0 or toks[i - 1] not in ("mkdir", "-p", "touch")):
+            p = os.path.expanduser(re.split(r"[;&|\s]", t)[0])
+            if p and not os.path.exists(p):
+                return p
+    return None
+
+
+def drop_dead(free: list[str]) -> tuple[list[str], list[str]]:
+    """울타리 밖 줄에서 죽은 작업과 그 바로 위 주석 묶음을 뺀다. (남길 줄, 알림)"""
+    keep: list[str] = []
+    notes: list[str] = []
+    for line in free:
+        s = line.strip()
+        if s and not s.startswith("#") and not re.match(r"^[A-Za-z_]\w*=", s):
+            p = dead_path(s)
+            if p:
+                while keep and keep[-1].strip().startswith("#"):
+                    keep.pop()  # 이 작업을 설명하던 주석
+                notes.append(f"  - 관리 밖 줄 지움 (--drop-dead, 없는 경로 {p}): {s[:90]}")
+                continue
+        keep.append(line)
+    return keep, notes
+
+
 def field_ok(field: str, i: int) -> bool:
     """분 시 일 월 요일 — 이름은 cron 이 받는 자리에서만."""
     names = {3: MONTHS, 4: DAYS}.get(i)
@@ -129,8 +172,9 @@ def validate(repo: str, lines: list[str]) -> list[str]:
 
 def main() -> int:
     args = set(sys.argv[1:])
-    if args - {"--diff", "--prune", "-h", "--help"}:
-        print(f"cron-install: 모르는 옵션: {' '.join(sorted(args - {'--diff', '--prune'}))}", file=sys.stderr)
+    known = {"--diff", "--prune", "--drop-dead", "-h", "--help"}
+    if args - known:
+        print(f"cron-install: 모르는 옵션: {' '.join(sorted(args - known))}", file=sys.stderr)
         return 2
     if args & {"-h", "--help"}:
         print(__doc__.split("\n\n")[1])
@@ -146,6 +190,9 @@ def main() -> int:
     new_blocks: dict[str, list[str]] = {}
     errors: list[str] = []
     notes: list[str] = []
+    if "--drop-dead" in args:
+        free, dropped = drop_dead(free)
+        notes += dropped
     found = sorted(root.glob(f"*/deploy/crontab.{host}")) + sorted(root.glob(f"*/personal/deploy/crontab.{host}"))
     for f in found:
         rel = f.relative_to(root)
