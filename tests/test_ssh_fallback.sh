@@ -10,7 +10,10 @@ echo "nc $*" >> "$NC_LOG"
 for a in "$@"; do [ "$a" = -z ] && { case " $* " in *" up"*) exit 0 ;; *) exit 1 ;; esac; }; done
 echo "relay $*"
 SH
-printf '#!/bin/sh\necho "$FAKE_OS"\n' > "$T/uname"
+cat > "$T/uname" <<'SH'
+#!/bin/sh
+echo "$FAKE_OS"
+SH
 chmod +x "$T/nc" "$T/uname"
 export PATH="$T:$PATH" NC_LOG="$T/log"
 fail=0; no() { echo "FAIL $1"; fail=1; }
