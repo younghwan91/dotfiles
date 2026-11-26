@@ -39,5 +39,28 @@ printf 'Host alias\n    HostName other.example\n' >> "$HOME/.ssh/config"
 out=$(DOTFILES_PERSONAL="$T/p" "$REPO/bin/repos-doctor" "$T/git" 2>&1)
 grep -q "공통 호스트가 또 있다: alias" <<<"$out" || { echo "FAIL ssh drift not reported"; fail=1; }
 
-[ $fail -eq 0 ] && echo "test_repos_doctor: 6/6 pass"
+
+# crontab: 없는 경로·관리 블록 밖의 줄을 잡고, 출력 파일·mkdir 인자·VAR= 값은 경로 검사에서 뺀다
+mkdir -p "$T/ok"; : > "$T/ok/run.sh"
+cat > "$T/ct" <<EOF
+MAILTO=""
+30 1 * * * cd $T/gone && ./run.sh >> $T/gone/log.txt 2>&1
+# >>> managed: r (deploy/crontab.h) >>>
+0 2 * * * mkdir -p $T/newdir && X=$T/state.file $T/ok/run.sh >> $T/out/x.log 2>&1
+5 2 * * * $T/missing/job.sh
+6 2 * * * flock -n /tmp/x.lock sh -c "$T/ok/run.sh --flag"
+# <<< managed: r <<<
+EOF
+out=$(REPOS_DOCTOR_CRONTAB="$T/ct" DOTFILES_PERSONAL="$T/p" "$REPO/bin/repos-doctor" "$T/git" 2>&1)
+grep -q "2번 줄: cron-install 관리 블록 밖" <<<"$out" || { echo "FAIL unmanaged cron line not reported"; fail=1; }
+grep -q "2번 줄: 없는 경로 $T/gone " <<<"$out" || { echo "FAIL missing cd dir not reported"; fail=1; }
+grep -q "5번 줄 \[r\]: 없는 경로 $T/missing/job.sh" <<<"$out" || { echo "FAIL missing script not reported"; fail=1; }
+grep "없는 경로" <<<"$out" | grep -qE "newdir|state.file|x.log|log.txt" && { echo "FAIL cron false positive"; grep -E "newdir|state|log" <<<"$out"; fail=1; }
+
+# 폴더 이름이 origin 레포 이름과 다르면 경고한다
+git init -q "$T/git/oldname"; git -C "$T/git/oldname" remote add origin https://github.com/o/newname.git
+out=$(DOTFILES_PERSONAL="$T/p" "$REPO/bin/repos-doctor" "$T/git" 2>&1)
+grep -A3 "oldname" <<<"$out" | grep -q "origin 레포(newname)와 다름" || { echo "FAIL folder/origin name mismatch not reported"; fail=1; }
+
+[ $fail -eq 0 ] && echo "test_repos_doctor: 12/12 pass"
 exit $fail

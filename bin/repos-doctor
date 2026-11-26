@@ -11,6 +11,10 @@
 #   - .venv 실행 파일 shebang 이 옮기기 전 경로 → mypy/pytest 실행 불가
 #   - graphify-out/ 이 무시되지 않음, 그래프 없음
 #   - 전역 링크(~/.gitconfig, ~/.config/git/hooks·ignore) 끊김, ci-gate 인데 gh 미인증, 상대 PC ssh 불가
+# 2026-11-27 에 찾은 것도:
+#   - crontab 이 지워진 폴더·스크립트를 가리킴 (작업 폴더를 지우거나 레포 이름을 바꾼 뒤 조용히 안 돎)
+#   - crontab 에 cron-install 관리 블록 밖의 손으로 적은 줄 (레포가 모르는 작업)
+#   - 폴더 이름이 origin 레포 이름과 다름 (GitHub 에서 이름을 바꾼 뒤)
 # 종료 코드: 문제가 하나라도 있으면 1.
 set -uo pipefail
 
@@ -104,6 +108,46 @@ for p in $peers; do
   if ssh -o BatchMode=yes -o ConnectTimeout=5 "$p" true 2>/dev/null; then say_ok "ssh $p"; else say_bad "ssh $p 불가 — push 후 상대 PC 동기화가 안 된다"; fi
 done
 
+# ── crontab ─────────────────────────────────────────────────────────────────
+# 테스트는 REPOS_DOCTOR_CRONTAB=<파일> 로 crontab 대신 파일을 읽힌다
+if [ -n "${REPOS_DOCTOR_CRONTAB:-}" ]; then ct=$(cat "$REPOS_DOCTOR_CRONTAB"); else ct=$(crontab -l 2>/dev/null || true); fi
+if [ -n "$ct" ] && command -v python3 >/dev/null; then
+  while IFS=$'\t' read -r kind msg; do
+    [ -n "$kind" ] || continue
+    if [ "$kind" = bad ]; then say_bad "$msg"; else say_warn "$msg"; fi
+  done < <(python3 -I -c '
+import os, re, shlex, sys
+block = None
+for n, line in enumerate(sys.stdin.read().splitlines(), 1):
+    m = re.match(r"# >>> managed: (\S+)", line)
+    if m:
+        block = m.group(1); continue
+    if line.startswith("# <<< managed"):
+        block = None; continue
+    s = line.strip()
+    if not s or s.startswith("#") or re.match(r"^[A-Za-z_]\w*=", s):
+        continue
+    cmd = s.split(None, 5)[5] if not s.startswith("@") else s.split(None, 1)[-1]
+    where = f"crontab {n}번 줄" + (f" [{block}]" if block else "")
+    if block is None:
+        print(f"warn\t{where}: cron-install 관리 블록 밖의 줄 — 레포 deploy/crontab.<호스트> 로 옮길 것: {cmd[:80]}")
+    try:
+        toks = shlex.split(cmd, comments=True)
+    except ValueError:
+        continue
+    skip = False
+    for i, t in enumerate(toks):
+        if skip:
+            skip = False; continue
+        if t in (">", ">>", "2>", "2>>", "&>", "<"):
+            skip = True; continue  # 출력 파일은 실행이 만든다
+        if t.startswith(("/", "~/")) and (i == 0 or toks[i - 1] not in ("mkdir", "-p", "touch")):
+            p = os.path.expanduser(re.split(r"[;&|\s]", t)[0])  # 따옴표 안의 "경로 옵션" 은 첫 단어만
+            if p and not os.path.exists(p):
+                print(f"bad\t{where}: 없는 경로 {p} — 이 작업은 돌지 않는다")
+' <<<"$ct")
+fi
+
 # ── 레포별 ─────────────────────────────────────────────────────────────────
 delegated_hooks="pre-push post-commit post-checkout post-merge"
 
@@ -152,6 +196,13 @@ for root in "${roots[@]}"; do
       out+=("${RED}✗${R} graphify-out/ 이 무시되지 않음 — 커밋될 수 있다"); problems=$((problems + 1))
     fi
     [ -n "$(git -C "$d" ls-files -- graphify-out 2>/dev/null)" ] && { out+=("${RED}✗${R} graphify-out/ 이 git 에 추적되고 있음"); problems=$((problems + 1)); }
+
+    # 4. 폴더 이름 = origin 레포 이름 — GitHub 에서 이름을 바꾼 뒤 폴더만 옛 이름이면 경로를 쓰는 크론·문서가 헷갈린다
+    origin=$(git -C "$d" remote get-url origin 2>/dev/null || true)
+    if [ -n "$origin" ]; then
+      rn=$(basename "${origin%.git}")
+      [ "$rn" = "$n" ] || { out+=("${YLW}●${R} 폴더 이름이 origin 레포($rn)와 다름 — mv 후 크론·Orca 경로도 바꿀 것"); problems=$((problems + 1)); }
+    fi
 
     if [ $problems -gt $before ]; then
       echo "  ${B}$n${R}"
