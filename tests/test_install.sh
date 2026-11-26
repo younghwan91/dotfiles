@@ -92,5 +92,39 @@ if command -v zsh >/dev/null; then
   if [ "$got" = "[]" ]; then ok; else echo "    got: $got" > "$HOME/out.txt"; no zshrc_no_profile_leaves_empty; fi
 fi
 
+# git 신원: 설치 전 ~/.gitconfig 의 신원은 .bak 으로 밀려도 ~/.gitconfig.local 로 옮겨진다 (실제로 잃은 적 있음)
+fresh; printf '[user]\n\tname = Old Me\n\temail = old@example.com\n' > "$HOME/.gitconfig"
+if inst --profile vanilla && [ "$(git config --file "$HOME/.gitconfig.local" user.email)" = old@example.com ] \
+   && [ "$(git config --file "$HOME/.gitconfig.local" user.name)" = "Old Me" ] && [ -f "$HOME/.gitconfig.bak" ] \
+   && [ "$(HOME=$HOME git config --global --includes user.email)" = old@example.com ]; then ok; else no vanilla_migrates_old_identity; fi
+# 이미 링크된 뒤 다시 돌려도 .bak 에서 되살리고, 두 번째 백업이 첫 .bak 을 덮지 않는다
+fresh; printf '[user]\n\tname = B\n\temail = bak@example.com\n' > "$HOME/.gitconfig.bak"; echo '[core]' > "$HOME/.gitconfig"
+if inst --profile vanilla && [ "$(git config --file "$HOME/.gitconfig.local" user.email)" = bak@example.com ] \
+   && grep -q bak@example.com "$HOME/.gitconfig.bak" && ls "$HOME"/.gitconfig.bak.* >/dev/null 2>&1; then ok; else no vanilla_identity_from_bak_and_no_clobber; fi
+# 비대화형: 플래그·환경변수로 신원을 준다
+fresh
+if inst --profile vanilla --git-name "Flag Me" --git-email flag@example.com \
+   && [ "$(git config --file "$HOME/.gitconfig.local" user.email)" = flag@example.com ] \
+   && [ "$(git config --file "$HOME/.gitconfig.local" user.name)" = "Flag Me" ] && ! grep -q '신원이 없다' "$HOME/out.txt"; then ok; else no identity_flags; fi
+fresh
+if DOTFILES_GIT_NAME=E DOTFILES_GIT_EMAIL=env@example.com inst --profile vanilla \
+   && [ "$(git config --file "$HOME/.gitconfig.local" user.email)" = env@example.com ]; then ok; else no identity_env; fi
+fresh
+if inst --profile vanilla && grep -q -- '--git-email' "$HOME/out.txt"; then ok; else no no_identity_hint_names_flags; fi
+
+# --shell: Oh My Zsh·p10k·플러그인을 clone 하고(설치 스크립트는 안 돌려 링크한 zshrc 가 그대로), 다시 돌려도 안전
+G=$(mktemp -d); tmps+=("$G")
+for r in ohmyzsh/ohmyzsh romkatv/powerlevel10k zsh-users/zsh-autosuggestions zsh-users/zsh-syntax-highlighting; do
+  mkdir -p "$G/$r" && git -C "$G/$r" init -q && echo x > "$G/$r/f" && git -C "$G/$r" add f \
+    && git -C "$G/$r" -c user.name=t -c user.email=t@example.com commit -qm init
+done
+fresh
+if DOTFILES_SHELL_GIT_BASE="file://$G" inst --profile vanilla --shell && [ -f "$HOME/.oh-my-zsh/f" ] \
+   && [ -f "$HOME/.oh-my-zsh/custom/themes/powerlevel10k/f" ] && [ -f "$HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions/f" ] \
+   && [ -f "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting/f" ] && points "$HOME/.zshrc" "$REPO/zsh/zshrc" \
+   && DOTFILES_SHELL_GIT_BASE="file://$G" inst --profile vanilla --shell; then ok; else no shell_installs_omz_p10k; fi
+fresh
+if inst --profile vanilla && [ ! -d "$HOME/.oh-my-zsh" ] && grep -q -- '--shell' "$HOME/out.txt"; then ok; else no shell_opt_in_with_hint; fi
+
 echo "test_install: $pass/$((pass + fail)) pass"
 [ $fail -eq 0 ]

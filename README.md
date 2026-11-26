@@ -30,7 +30,7 @@ gh repo clone <owner>/dotfiles ~/git/dotfiles
 ~/git/dotfiles/install.sh --profile vanilla     # or personal
 ```
 
-`install.sh` symlinks shell, Git, Vim, and Claude Code configs into `~` and saves your profile to `~/.config/dotfiles/profile`. `vanilla` installs general-purpose defaults and prompts for your git name and email; `personal` clones `personal/` alongside `origin` (overridable via `DOTFILES_PERSONAL_REPO`).
+`install.sh` symlinks shell, Git, Vim, and Claude Code configs into `~` and saves your profile to `~/.config/dotfiles/profile`. `vanilla` installs general-purpose defaults and carries over the git identity from your existing `~/.gitconfig` into `~/.gitconfig.local` (or prompts; pass `--git-name`/`--git-email` for unattended installs); add `--shell` to install zsh, Oh My Zsh and powerlevel10k on a bare server; `personal` clones `personal/` alongside `origin` (overridable via `DOTFILES_PERSONAL_REPO`).
 
 On a fresh machine, run the OS setup script first:
 
@@ -99,7 +99,7 @@ The `vanilla` profile installs public defaults only. `personal/` is a separate p
 - **One repo, every OS**: Symlinked on macOS, Linux, and WSL (`install.sh`) and copied on Windows (`install.ps1`), so `git pull` or `pull-all` updates every machine in place.
 - **Profile separation (`vanilla` / `personal`)**: Keeps reusable public defaults separate from private `personal/` overlays (git identity allowlist, SSH hosts, host crontabs, personal Claude agents).
 - **Global Git hooks & local CI**: `pre-commit` identity checks, `commit-msg` English-only guard, and `pre-push` `ci-local.py` running `.github/workflows/ci.yml` in an isolated worktree before push.
-- **Cross-host tools**: `bin/pull-all`, `bin/cron-install`, `bin/ssh-keys-sync`, `bin/repos-doctor`, and `bin/gh-protect` keep repositories, crontabs, and SSH keys in sync.
+- **Cross-host tools**: `bin/pull-all`, `bin/cron-install`, `bin/ssh-keys-sync`, `bin/ssh-fallback`, `bin/repos-doctor`, and `bin/gh-protect` keep repositories, crontabs, and SSH keys in sync.
 - **Claude Code HUD & guard**: System-metrics status line (`claude/hud/statusline.sh`) and `PreToolUse` guard (`claude/hooks/guard.py`) blocking secret leaks, destructive commands, and non-`main` branches in cron checkouts.
 
 ## Layering and profiles

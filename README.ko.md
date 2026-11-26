@@ -30,7 +30,7 @@ gh repo clone <owner>/dotfiles ~/git/dotfiles
 ~/git/dotfiles/install.sh --profile vanilla     # 또는 personal
 ```
 
-`install.sh`는 셸, Git, Vim, Claude Code 설정을 `~`에 심볼릭 링크로 연결하고 선택한 프로필을 `~/.config/dotfiles/profile`에 저장합니다. `vanilla` 프로필은 범용 기본값만 설치하며 Git 이름과 이메일을 입력받아 `~/.gitconfig.local`에 기록합니다. `personal` 프로필은 `origin` 옆의 비공개 `personal/` 레포를 함께 clone합니다(`DOTFILES_PERSONAL_REPO`로 경로를 바꿀 수 있습니다).
+`install.sh`는 셸, Git, Vim, Claude Code 설정을 `~`에 심볼릭 링크로 연결하고 선택한 프로필을 `~/.config/dotfiles/profile`에 저장합니다. `vanilla` 프로필은 범용 기본값만 설치하며, 기존 `~/.gitconfig`의 Git 신원을 `~/.gitconfig.local`로 옮깁니다(없으면 입력받고, 비대화형 설치는 `--git-name`/`--git-email`로 넘깁니다). 헤드리스 서버에서는 `--shell`을 붙이면 zsh, Oh My Zsh, powerlevel10k까지 설치합니다. `personal` 프로필은 `origin` 옆의 비공개 `personal/` 레포를 함께 clone합니다(`DOTFILES_PERSONAL_REPO`로 경로를 바꿀 수 있습니다).
 
 새 PC를 처음부터 구성할 때는 OS별 부트스트랩 스크립트를 먼저 실행합니다:
 
@@ -99,7 +99,7 @@ echo '{"tool_name":"Bash","tool_input":{"command":"cat .env"},"cwd":"/tmp"}' | p
 - **하나의 레포, 모든 OS**: macOS·Linux·WSL은 심볼릭 링크(`install.sh`), Windows는 `install.ps1` 복사로 구성해 `git pull`이나 `pull-all`만으로 모든 PC를 즉시 갱신합니다.
 - **프로필 분리 (`vanilla` / `personal`)**: 공개 가능한 범용 설정과 비공개 `personal/`(Git 신원 허용 목록, SSH 호스트, 호스트 크론, 개인 Claude 에이전트)을 분리해 관리합니다.
 - **전역 Git 훅 & 로컬 CI**: `pre-commit` 신원 검사, `commit-msg` 영문 전용 검사, `pre-push` `ci-local.py`로 푸시할 커밋을 격리된 워크트리에서 미리 검증합니다.
-- **호스트 간 동기화 도구**: `bin/pull-all`, `bin/cron-install`, `bin/ssh-keys-sync`, `bin/repos-doctor`, `bin/gh-protect`로 레포지토리, 크론, SSH 키를 일관되게 유지합니다.
+- **호스트 간 동기화 도구**: `bin/pull-all`, `bin/cron-install`, `bin/ssh-keys-sync`, `bin/ssh-fallback`, `bin/repos-doctor`, `bin/gh-protect`로 레포지토리, 크론, SSH 키를 일관되게 유지합니다.
 - **Claude Code 상태줄 & 가드**: 시스템 메트릭 HUD(`claude/hud/statusline.sh`)와 비밀값 유출·위험 명령·운영 체크아웃 브랜치 변경을 막는 `PreToolUse` 가드(`claude/hooks/guard.py`)를 포함합니다.
 
 ## 계층과 프로필
