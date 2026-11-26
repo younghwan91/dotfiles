@@ -9,6 +9,10 @@
 #                              고른 값은 ~/.config/dotfiles/profile 에 저장 — 다음부터는 생략 가능
 #   ./install.sh --claude-md   claude/CLAUDE.md 도 Claude Code 전역 지시문으로 링크 (personal 은 늘 링크)
 #   ./install.sh --brew        macOS: macos/Brewfile 로 `brew bundle` 도 실행
+#   ./install.sh --shell       zsh·Oh My Zsh·powerlevel10k·플러그인 2개가 없으면 설치 (헤드리스 서버·컨테이너용 경량 경로)
+#   ./install.sh --git-name <이름> --git-email <메일>
+#                              git 신원을 ~/.gitconfig.local 에 기록 (DOTFILES_GIT_NAME / DOTFILES_GIT_EMAIL 도 같다).
+#                              SSH·자동화처럼 프롬프트가 안 뜨는 설치용. 안 주면: 기존 전역 신원 → 묻기
 #
 # 이미 있는 실제 파일은 심볼릭 링크로 바꾸기 전에 <file>.bak 으로 옮긴다.
 # 머신별·비밀 설정은 *.local 파일에 둔다(이 레포에는 절대 넣지 않는다):
@@ -16,14 +20,20 @@
 set -euo pipefail
 repo="$(cd "$(dirname "$0")" && pwd)"
 
-with_claude_md=0 with_brew=0 profile=
+with_claude_md=0 with_brew=0 with_shell=0 profile=
+git_name=${DOTFILES_GIT_NAME:-} git_email=${DOTFILES_GIT_EMAIL:-}
 while [ $# -gt 0 ]; do
   case $1 in
     --claude-md) with_claude_md=1 ;;
     --brew) with_brew=1 ;;
+    --shell) with_shell=1 ;;
+    --git-name) git_name=${2:-}; shift ;;
+    --git-name=*) git_name=${1#--git-name=} ;;
+    --git-email) git_email=${2:-}; shift ;;
+    --git-email=*) git_email=${1#--git-email=} ;;
     --profile) profile=${2:-}; shift ;;
     --profile=*) profile=${1#--profile=} ;;
-    -h|--help) sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,17p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "알 수 없는 옵션: $1" >&2; exit 2 ;;
   esac
   shift
@@ -62,7 +72,11 @@ link() {  # link <레포 기준 원본 | 절대 경로> <대상>
   fi
   if [ -e "$dst" ] && [ ! -L "$dst" ]; then
     if cmp -s "$src" "$dst" 2>/dev/null; then rm -rf "$dst"
-    else mv "$dst" "$dst.bak"; echo "  ${Y}백업${R} ${dst/#$HOME/~}.bak"; fi
+    else
+      # 이미 있는 .bak 은 덮지 않는다 — 두 번째 설치가 첫 백업(원래 신원이 든 ~/.gitconfig 등)을 지울 수 있다
+      local bak="$dst.bak"; [ -e "$bak" ] || [ -L "$bak" ] && bak="$dst.bak.$(date +%Y%m%d%H%M%S)"
+      mv "$dst" "$bak"; echo "  ${Y}백업${R} ${bak/#$HOME/~}"
+    fi
   fi
   ln -sfn "$src" "$dst"
   echo "  ${G}→${R} ${dst/#$HOME/~}"
@@ -82,6 +96,14 @@ link zsh/zshrc  ~/.zshrc
 link zsh/zshenv ~/.zshenv
 if [ "$os" = darwin ] && [ -e "$repo/zsh/p10k.darwin.zsh" ]; then link zsh/p10k.darwin.zsh ~/.p10k.zsh
 else link zsh/p10k.zsh ~/.p10k.zsh; fi
+# 링크하기 전에 지금 쓰던 전역 git 신원을 기억한다 — ~/.gitconfig 가 .bak 으로 밀리면 신원도 같이 사라진다.
+# dotfiles gitconfig 는 신원을 ~/.gitconfig.local(또는 personal 프로필)에서 읽는다. 아래 "git 신원" 에서 옮긴다.
+old_git_name='' old_git_email=''
+for f in ~/.gitconfig ~/.gitconfig.bak; do
+  [ -f "$f" ] && [ ! -L "$f" ] || continue
+  [ -n "$old_git_name" ] || old_git_name=$(git config --file "$f" --includes user.name 2>/dev/null || true)
+  [ -n "$old_git_email" ] || old_git_email=$(git config --file "$f" --includes user.email 2>/dev/null || true)
+done
 link git/gitconfig     ~/.gitconfig
 link git/hooks         ~/.config/git/hooks
 link git/ignore        ~/.config/git/ignore
@@ -253,21 +275,69 @@ if compgen -G "$HOME/.ssh/config.d/*.conf" >/dev/null; then
     echo "  ${G}→${R} ~/.ssh/config: 맨 끝에 Include config.d/*.conf (이전 것은 ~/.ssh/config.bak-dotfiles)"
   fi
 fi
+# ---- git 신원 ----
+# 순서: --git-name/--git-email(또는 DOTFILES_GIT_*) → (vanilla) 설치 전 전역 신원 → (터미널이면) 묻기 → 안내.
+# 명시한 값은 어느 프로필이든 ~/.gitconfig.local 에 쓴다. 옮기기·묻기는 vanilla 만 — personal 은 프로필 파일이 신원이다.
+set_local_identity() {  # set_local_identity <이름> <메일> <출처>
+  [ -n "$1" ] && git config --file ~/.gitconfig.local user.name "$1"
+  [ -n "$2" ] && git config --file ~/.gitconfig.local user.email "$2"
+  echo "  ${G}→${R} ~/.gitconfig.local user.name/email ($3)"
+}
+if [ -n "$git_name$git_email" ]; then
+  set_local_identity "$git_name" "$git_email" "옵션"
+fi
 if [ "$profile" = vanilla ] && [ -z "$(git config --global --includes user.email 2>/dev/null)" ]; then
-  if [ -t 0 ]; then
+  if [ -n "$old_git_email" ]; then
+    set_local_identity "$old_git_name" "$old_git_email" "설치 전 ~/.gitconfig 에서 옮김"
+  elif [ -t 0 ]; then
     read -r -p "git 이름: " gname; read -r -p "git 메일: " gmail
-    git config --file ~/.gitconfig.local user.name "$gname"
-    git config --file ~/.gitconfig.local user.email "$gmail"
-    echo "  ${G}→${R} ~/.gitconfig.local user.name/email"
+    set_local_identity "$gname" "$gmail" "입력"
   else
-    echo "  ${Y}참고${R} git 신원이 없다 — git config --file ~/.gitconfig.local user.email <메일> (이름도)"
+    echo "  ${Y}참고${R} git 신원이 없다 — install.sh --git-name <이름> --git-email <메일> 로 다시 실행"
+  fi
+fi
+
+# ---- 셸 (--shell): zsh 설정만 링크하고 바이너리·프레임워크가 없으면 프롬프트가 안 뜬다 ----
+# setup/<os>.sh 는 앱·패키지까지 깔아 무겁다. 여기는 zshrc 가 기대하는 것만: zsh, Oh My Zsh, p10k, 플러그인 2개.
+shell_missing() {
+  ! command -v zsh >/dev/null || [ ! -d ~/.oh-my-zsh ] || [ ! -d ~/.oh-my-zsh/custom/themes/powerlevel10k ] \
+    || [ ! -d ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions ] || [ ! -d ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting ]
+}
+if [ "$with_shell" = 0 ] && [ -t 0 ] && [ -t 1 ] && shell_missing; then
+  read -r -p "zsh 프롬프트에 필요한 것(zsh·Oh My Zsh·p10k)이 빠졌다. 지금 설치할까? [y/N] " a
+  case $a in y|Y|yes) with_shell=1 ;; esac
+fi
+if [ "$with_shell" = 1 ]; then
+  if ! command -v zsh >/dev/null && [ -z "${INSTALL_SKIP_SERVICES:-}" ]; then
+    sudo_=(); [ "$(id -u)" = 0 ] || sudo_=(sudo -n)
+    if command -v apt-get >/dev/null; then "${sudo_[@]}" apt-get install -y -qq zsh >/dev/null 2>&1
+    elif command -v dnf >/dev/null; then "${sudo_[@]}" dnf install -y -q zsh >/dev/null 2>&1
+    elif command -v apk >/dev/null; then "${sudo_[@]}" apk add -q zsh >/dev/null 2>&1
+    elif command -v brew >/dev/null; then brew install -q zsh >/dev/null 2>&1
+    fi || true
+    command -v zsh >/dev/null && echo "  ${G}→${R} zsh" \
+      || echo "  ${Y}참고${R} zsh 를 못 깔았다(sudo 비밀번호?) — sudo apt-get install -y zsh 를 직접"
+  fi
+  gh_base=${DOTFILES_SHELL_GIT_BASE:-https://github.com}  # 테스트·미러용
+  zc=~/.oh-my-zsh/custom
+  for pair in "ohmyzsh/ohmyzsh:$HOME/.oh-my-zsh" \
+              "romkatv/powerlevel10k:$zc/themes/powerlevel10k" \
+              "zsh-users/zsh-autosuggestions:$zc/plugins/zsh-autosuggestions" \
+              "zsh-users/zsh-syntax-highlighting:$zc/plugins/zsh-syntax-highlighting"; do
+    src=${pair%%:*} dst=${pair#*:}
+    [ -d "$dst" ] && { echo "  ${D}✓ ${dst/#$HOME/~}${R}"; continue; }
+    # Oh My Zsh 공식 설치 스크립트는 ~/.zshrc 를 템플릿으로 바꾸려 든다 — clone 만 하면 링크한 zshrc 가 그대로다
+    if git clone -q --depth=1 "$gh_base/$src" "$dst" 2>/dev/null; then echo "  ${G}→${R} ${dst/#$HOME/~}"
+    else echo "  ${Y}참고${R} $src 를 못 받았다 — 네트워크를 확인하고 install.sh --shell 을 다시"; fi
+  done
+  if command -v zsh >/dev/null && [ "$(basename "${SHELL:-}")" != zsh ]; then
+    echo "  ${Y}참고${R} 로그인 셸이 zsh 가 아니다 — chsh -s \"\$(command -v zsh)\""
   fi
 fi
 
 # ---- 점검 ----
 echo
-[ -d ~/.oh-my-zsh ] || echo "  ${Y}참고${R} Oh My Zsh 가 없다 — setup/ubuntu.sh(Linux)를 돌리거나 직접 설치"
-[ -d ~/.oh-my-zsh/custom/themes/powerlevel10k ] || echo "  ${Y}참고${R} powerlevel10k 테마가 없다"
+shell_missing && echo "  ${Y}참고${R} zsh·Oh My Zsh·powerlevel10k 중 빠진 게 있다 — install.sh --shell (가볍게) 또는 setup/<os>.sh (전체)"
 command -v jq >/dev/null || echo "  ${Y}참고${R} 상태 줄에 jq 가 필요하다"
 for f in ~/.zshrc.bak ~/.gitconfig.bak; do
   [ -e "$f" ] && echo "  ${Y}참고${R} ${f/#$HOME/~} 를 확인 — 머신별·비밀 설정은 ${f%.bak}.local 로 옮길 것"

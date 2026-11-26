@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# ssh-fallback — ssh ProxyCommand: 주소 후보를 차례로 찔러 처음 열리는 곳으로 붙는다.
+# 같은 PC 가 유선·Wi-Fi·VPN 마다 주소가 다를 때 Host 하나로 쓴다(유선이 빠지면 Wi-Fi 로 자동 폴백).
+#
+#   ssh-fallback [-t <초>] <포트> <주소1> [주소2 ...]
+#
+# ~/.ssh/config 예 (노드마다 같은 블록을 두면 노드 간 완전 메시가 된다):
+#   Host box
+#       ProxyCommand ssh-fallback %p box-eth.lan box-wifi.lan box.local
+#       # ssh 는 ProxyCommand 에서 ~ 를 풀지 않는다 — PATH 에 없으면 전체 경로로
+#       HostKeyAlias box     # 주소가 바뀌어도 known_hosts 항목은 하나
+#
+# 탐침은 nc -z 로 한다. 연결 제한 시간 옵션이 OS 마다 달라 uname 으로 고른다:
+# macOS 는 -G(연결만), 그 밖(OpenBSD nc·ncat)은 -w. -w 는 OpenBSD nc 에서 유휴 제한이기도 해서
+# 붙은 뒤의 중계(nc <주소> <포트>)에는 넣지 않는다 — 넣으면 가만히 있는 세션이 끊긴다.
+set -euo pipefail
+t=${SSH_FALLBACK_TIMEOUT:-2}
+if [ "${1:-}" = -t ]; then t=${2:?}; shift 2; fi
+[ $# -ge 2 ] || { sed -n '2,6p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
+port=$1; shift
+command -v nc >/dev/null || { echo "ssh-fallback: nc(netcat) 가 없다" >&2; exit 2; }
+case "$(uname -s)" in
+  Darwin) to=(-G "$t") ;;
+  *)      to=(-w "$t") ;;
+esac
+for h in "$@"; do
+  if nc -z "${to[@]}" "$h" "$port" >/dev/null 2>&1; then
+    [ -n "${SSH_FALLBACK_VERBOSE:-}" ] && echo "ssh-fallback: $h:$port" >&2
+    exec nc "$h" "$port"
+  fi
+done
+echo "ssh-fallback: 어느 주소도 열리지 않았다 — $* (포트 $port)" >&2
+exit 1

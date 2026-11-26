@@ -45,6 +45,7 @@ git 도 같은 방식이다: `git/gitconfig` 가 자격 증명 도우미용 `~/.
 - `bin/pull-all` — `~/git` 아래 모든 레포를 fast-forward. `--ci-gate` 는 GitHub 체크가 초록인 커밋만 받고(빨강이거나 아직 도는 중이면 그대로 두고 ⏸ 로 보고), `--check` 는 뒤처진 레포만 보고한다.
 - `bin/cron-install` — `~/git/*/deploy/crontab.<호스트>`(와 `*/personal/deploy/`) 를 레포마다 울타리 친 블록으로 사용자 crontab 에 설치한다. 울타리 밖 줄은 건드리지 않는다. 파일이 없으면 옛 블록을 유지하고, 잘못된 줄이 있으면 설치를 멈추며, 이전 crontab 은 `~/.local/state/cron-install/` 에 백업한다.
 - `bin/ssh-keys-sync` — 모든 PC 의 `~/.ssh/authorized_keys` 를 GitHub 계정의 공개키 + `personal/ssh/authorized_keys` 로 맞춘다(Windows 는 `install.ps1`). 새 PC 는 GitHub 에 키를 올리면 다음 동기화 때 모든 PC 에 들어갈 수 있다. GitHub 에서 못 받거나 0개면 건드리지 않는다. `--check` 는 보고만.
+- `bin/ssh-fallback` — 한 호스트의 주소 후보(유선 → Wi-Fi → `.local`)를 차례로 찔러 처음 열리는 곳으로 붙는 ssh `ProxyCommand`. `ProxyCommand ssh-fallback %p box-eth.lan box-wifi.lan box.local` 에 `HostKeyAlias box` 를 같이 쓴다. 연결 제한 옵션은 OS 에 맞춰 고르고(macOS `nc -G`, 그 밖 `-w`), 붙은 뒤 중계에는 유휴 제한을 걸지 않는다.
 - `bin/repos-doctor` — 조용히 고장 난 git·훅·환경 설정(옛 경로를 가리키는 `core.hooksPath`, 깨진 `.venv` shebang, 끊긴 전역 링크 등)을 찾아 보고만 한다. 문제가 있으면 종료 코드 1.
 - `bin/gh-protect` — 내 공개 레포마다 "main via PR" ruleset(기본 브랜치는 PR 로만, 승인 0개, force push·삭제 금지)을 건다. `--check` 는 빠진 레포만 보고한다. 새 공개 레포를 놓치지 않게 크론으로 매일 돌린다.
 - 크론 작업은 `crontab -e` 가 아니라 레포의 `deploy/crontab.<호스트>` 를 고쳐 바꾼다.
@@ -189,4 +190,4 @@ pwsh -File C:\dev\git\dotfiles\windows\install.ps1
 | 정적 검사 | `tests/test_shellcheck.sh`(style, `-x`), `tests/test_ruff.sh`, `tests/test_psscriptanalyzer.sh`, `tests/test_actionlint.sh`, `tests/test_typos.sh` |
 | 공개 레포 | `tests/check_no_personal.py`(commit 때도 돈다)와 그 자체 테스트 `tests/test_check_no_personal.sh` |
 | Windows 파일 | `tests/test_powershell.sh`(파싱), `tests/test_ps1_ascii.sh`, `tests/test_eol.sh`(`.cmd` 는 CRLF) |
-| 동작 | `install`, `cron-install`, `pull-all`, `repos-doctor`, `ssh-keys-sync`, `gh-protect`, `update`, 신원 훅, Claude 가드 — `tests/test_*.sh`, `claude/hooks/test_guard*.py` |
+| 동작 | `install`, `cron-install`, `pull-all`, `repos-doctor`, `ssh-keys-sync`, `ssh-fallback`, `gh-protect`, `update`, 신원 훅, Claude 가드 — `tests/test_*.sh`, `claude/hooks/test_guard*.py` |
